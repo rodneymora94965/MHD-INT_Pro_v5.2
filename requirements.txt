@@ -5,6 +5,7 @@ streamlit>=1.28.0
 numba>=0.57.0
 matplotlib>=3.7
 reportlab>=4.0
+cryptografhy>=42.0.0
 
 # NOTA: ffmpeg es opcional del sistema (no es paquete PyPI). Si no está
 # instalado, el video se genera como GIF automáticamente.
