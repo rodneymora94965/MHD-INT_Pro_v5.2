@@ -1,0 +1,13 @@
+numpy>=1.24.0
+pandas>=2.0.0
+plotly>=5.14.0
+streamlit>=1.28.0
+numba>=0.57.0
+matplotlib>=3.7
+reportlab>=4.0
+
+# NOTA: ffmpeg es opcional del sistema (no es paquete PyPI). Si no está
+# instalado, el video se genera como GIF automáticamente.
+# Linux:   sudo apt install ffmpeg
+# macOS:   brew install ffmpeg
+# Windows: https://ffmpeg.org/download.html

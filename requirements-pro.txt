@@ -1,0 +1,14 @@
+numpy
+pandas
+plotly
+streamlit
+numba
+matplotlib>=3.7
+reportlab>=4.0
+cryptography>=42.0  # firma/verificación de licencia (licencia.py)
+
+# NOTA: ffmpeg es opcional del sistema (no es paquete PyPI). Si no está
+# instalado, el video se genera como GIF automáticamente.
+# Linux:   sudo apt install ffmpeg
+# macOS:   brew install ffmpeg
+# Windows: https://ffmpeg.org/download.html
