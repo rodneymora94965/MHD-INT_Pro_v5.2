@@ -1,19 +1,23 @@
-# Archivos compilados de Python
-*.pyc
+# Python
 __pycache__/
-
-# Archicos de entorno virtual
+*.pyc
+.pytest_cache/
 venv/
 env/
 .venv/
 
-# Archivos de sistema
+# Sistema
 .DS_Store
 Thumbs.db
 
-# Archivos de licencia privados (NUNCA se suben)
-clave_privada_NO_COMPARTIR.pem
-
-# Archivos de configuracion local
+# NUNCA subir: licencias, claves, configuracion local ni datos de usuario
+license*.json
+*.pem
+*.key
+.env
+.dev.vars
 *.local
-*.user
+historial_simulaciones*.csv
+data/
+dist/
+build/

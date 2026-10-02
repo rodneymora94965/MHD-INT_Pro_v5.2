@@ -1,5 +1,5 @@
 # MHD-INT — Términos de Licenciamiento (Modelo Dual)
-**Versión 5.0 — Julio 2026**
+**Versión 5.2.1 — Septiembre 2026** (precios y niveles actualizados)
 **Contacto: Roney Rigg Mora**
 
 > Nota: este documento es un borrador de trabajo, no un contrato. Antes de publicarlo o firmarlo con un cliente, revísalo con un abogado de propiedad intelectual — especialmente las secciones 3 y 4, que definen obligaciones legales reales.
@@ -20,28 +20,32 @@ Cualquier persona puede:
 
 ---
 
-## 2. SaaS por créditos — $10 USD = 10 simulaciones
+## 2. SaaS por créditos — no disponible
 
-- Roney Rigg Mora opera el servicio de red bajo AGPL-3.0.
-- El código fuente del servicio permanece público en el repositorio oficial, cumpliendo la obligación de red de AGPL.
-- El pago cubre uso del servicio alojado (infraestructura, cómputo, mantenimiento), **no una licencia distinta** — el usuario no adquiere derechos adicionales sobre el código.
-- Créditos adicionales al mismo precio ($10 = 10 corridas), sin vencimiento.
+Se evaluó ofrecer MHD-INT como servicio alojado ($10 = 10 simulaciones). **Hoy no existe ese servicio** y no se vende. Si se lanza en el futuro, se publicarán sus condiciones.
 
 ---
 
-## 3. Licencia Comercial — Ejecutable Básico ($25) y Profesional ($100)
+## 3. Licencia Comercial del ejecutable — Standard y Pro
 
-Estos niveles **no se basan en restringir técnicamente el código AGPL** (que es de acceso público), sino en ofrecer una **licencia comercial alternativa**, exenta de las obligaciones de AGPL, para quienes prefieran:
+| Nivel | Licencia de 2 años (precio de lanzamiento, sep-2026) |
+|---|---|
+| Standard | $39 |
+| Pro (incluye las 3 plantillas de Blender) | $79 |
 
-- Recibir un binario compilado con soporte oficial, sin tener que compilar ni mantener el código ellos mismos.
-- Usar el software en un contexto donde no quieren (o no pueden) cumplir las condiciones de AGPL — por ejemplo, integrarlo en un flujo de trabajo cerrado sin obligación de publicar nada propio.
-- Contar con actualizaciones, soporte prioritario y garantía de que el binario corresponde a una versión validada.
+Condiciones completas para el cliente: `docs/LICENCIA_DE_USO.md` (se entrega dentro del paquete).
 
-**Lo que compra el cliente:** el binario + soporte + la certeza de que su uso comercial no lo obliga a las cláusulas de AGPL, mientras use exclusivamente el ejecutable entregado (no el código fuente).
+Estos niveles **no se basan en restringir técnicamente el código AGPL**, sino en ofrecer una **licencia comercial alternativa** sobre el binario compilado, exenta de las obligaciones de AGPL, para quienes prefieran:
 
-**Lo que NO compra:** exclusividad sobre el software, ni el derecho a redistribuir o hacer su propia versión cerrada — eso corresponde al nivel 4.
+- Recibir un binario compilado con soporte, sin tener que compilar ni mantener el código.
+- Usar el software sin las condiciones de AGPL (por ejemplo, en un flujo de trabajo cerrado).
+- Recibir las actualizaciones 5.x durante el plazo de la licencia.
 
-*Nota técnica:* los límites de "100 simulaciones" no pueden aplicarse con garantía técnica absoluta si el cliente decide acudir al repositorio AGPL público en paralelo. El valor real de este nivel es el soporte y la comodidad, no un candado inquebrantable — conviene comunicarlo así en vez de presentarlo como una restricción dura.
+**Lo que compra el cliente:** el uso del binario por una persona durante el plazo (2 años) + soporte por email + actualizaciones 5.x durante ese plazo.
+
+**Lo que NO compra:** el código fuente, exclusividad, ni el derecho a redistribuir el binario o la licencia.
+
+*Nota técnica:* la licencia se verifica localmente con una firma ECDSA; no está atada al hardware. El valor de este nivel es el binario listo, el soporte y la comodidad, no un candado inquebrantable.
 
 ---
 
@@ -67,9 +71,8 @@ Incluye además:
 
 | Nivel | Qué recibe el cliente | Base legal |
 |---|---|---|
-| Público (gratis) | Código fuente completo | AGPL-3.0 |
-| SaaS ($10/10 sims) | Uso del servicio alojado | AGPL-3.0 (el servicio cumple la cláusula de red) |
-| Básico/Profesional ($25/$100) | Binario + soporte, sin obligaciones AGPL para ese uso | Licencia comercial limitada al binario |
+| Público (gratis) | Versión pública del código (ver §1) | AGPL-3.0 |
+| Standard / Pro ($39 Standard / $79 Pro, 2 años) | Binario + soporte + actualizaciones 5.x durante el plazo, sin obligaciones AGPL para ese uso | Licencia comercial limitada al binario (`docs/LICENCIA_DE_USO.md`) |
 | Código Fuente ($33.000) | Código fuente + derecho a cerrarlo/redistribuirlo | Licencia comercial propietaria (dual con AGPL) |
 
 ---
@@ -79,3 +82,4 @@ Incluye además:
 - Redacción legal formal del contrato de licencia comercial (niveles 3 y 4) — requiere revisión de abogado.
 - Mecanismo de verificación de versión/soporte (no de bloqueo de uso) para los ejecutables.
 - Texto exacto del aviso informativo que reemplaza el bloqueo de 30 días descartado.
+- **Confirmar §1 (sep-2026):** esta sección dice "código fuente completo", pero `docs/MANUAL_USUARIO.md` §1.3 describe la versión pública como **reducida** (`app_streamlit.py`, 47 planetas, sin modos Pro). Ajustar §1 a lo que realmente esté publicado en el repositorio: si los módulos Pro están públicos bajo AGPL, cualquiera puede usarlos gratis.

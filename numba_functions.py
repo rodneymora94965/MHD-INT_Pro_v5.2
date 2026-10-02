@@ -1,5 +1,32 @@
 import numpy as np
-from numba import njit
+
+# FIX (ago-2026, tras confirmar en la compilación real de Roney que Numba
+# no carga dentro del .exe de Nuitka standalone -- "DLL load failed while
+# importing _typeconv"): confirmado contra el propio issue tracker de
+# Nuitka (github.com/Nuitka/Nuitka/issues/2652) que Numba en standalone
+# es un caso conocido, no siempre soportado ("Numba is not yet working
+# with Nuitka standalone... but it may fail" incluso con el flag que
+# ellos mismos recomiendan, --noinclude-numba-mode).
+#
+# En vez de depender de que Numba SIEMPRE cargue, este módulo funciona
+# con o sin él: si numba está disponible (desarrollo, streamlit run,
+# builds donde sí carga bien), las funciones de abajo compilan con JIT
+# y corren rápido, igual que siempre. Si numba no está disponible o no
+# carga (este .exe), @njit se vuelve un decorador que no hace nada --
+# las funciones siguen andando, como Python interpretado normal. Más
+# lento, pero la app no se rompe. Las 12 funciones de este archivo son
+# aritmética simple (float/ndarray), sin nada exclusivo de numba, así
+# que el resultado numérico es idéntico en los dos casos.
+try:
+    from numba import njit
+except ImportError:
+    def njit(*args, **kwargs):
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        def decorador(f):
+            return f
+        return decorador
+
 
 # ============================================================================
 # CORRECCIÓN v4.1 (integración Cambio 1, 2026-07-24):

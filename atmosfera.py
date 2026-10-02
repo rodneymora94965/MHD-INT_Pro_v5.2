@@ -39,7 +39,10 @@ class Atmosfera:
         self.eta = eficiencia_escape
         self.distancia_ua = distancia_ua
 
-        self.F_XUV_0 = F_XUV_inicial / (distancia_ua ** 2)
+        # AUDITORIA oct-2026: F_XUV_inicial ya es el valor a 1 UA y el
+        # escalamiento por distancia (a/UA)^-2 se aplica en cada paso en
+        # actualizar(); dividir tambien aqui lo aplicaba dos veces (a^-4).
+        self.F_XUV_0 = F_XUV_inicial
 
         if tipo_estrella.upper().startswith('M'):
             self.beta = 0.8  # enanas M: XUV saturado por mas tiempo (Loyd et al. 2020)

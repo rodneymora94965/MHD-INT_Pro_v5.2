@@ -92,7 +92,11 @@ def calcular_mhi(resultado: ResultadoSimulacion) -> dict:
         # dataset ya validado sin ninguna base fisica real.
         eps_conocido = getattr(resultado, "eps_conocido", False)
         eps_final = resultado.eps_final_deg if eps_conocido else None
-        if eps_conocido and (eps_final > 60.0 or eps_final < 5.0):
+        # AUDITORIA oct-2026: se quito la condicion eps < 5 grados. Un eje
+        # casi perpendicular a la orbita no causa efecto invernadero (el de
+        # Venus viene de su cercania al Sol); penalizaba a Venus y Jupiter
+        # sin base fisica. Se mantiene solo la de oblicuidad extrema > 60.
+        if eps_conocido and eps_final > 60.0:
             penalizacion_obl = -20.0
         else:
             penalizacion_obl = 0.0

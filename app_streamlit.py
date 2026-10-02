@@ -8,15 +8,20 @@ from database import PLANETAS
 from sensibilidad_runner import analisis_sensibilidad, analisis_sensibilidad_extendido
 from validacion import validar_todos
 from habitabilidad import calcular_mhi, categoria_mhi
+from estilo_app import metric_categoria, calidad_mhi
 from mapa_mhi import generar_mapa_mhi
 from historial import guardar_simulacion, cargar_historial, borrar_historial
 from exportar_video import construir_json_video  # exportacion JSON para IAs de video
 from glosario_terminos import GLOSARIO_TERMINOS  # diccionario de terminos, compartido con Standard/Pro
 from etiquetas_columnas import ETIQUETAS_HISTORIAL, ETIQUETAS_MAPA_MHI, con_nombres_legibles
 from educacion_ui import render_educacion  # sección educativa
+from ruta_aprendizaje_ui import render_ruta_aprendizaje  # ruta de aprendizaje curada
+from biblioteca_fotos_ui import render_biblioteca_fotos  # biblioteca de fotos astronómicas
 from sesion import obtener_sesion_id
+from visualizacion_3d import render_orbita_3d
+from eventos_ui import render_eventos
 
-st.set_page_config(page_title="MHD-INT v5.0", layout="wide", page_icon="assets/logo_mhd_int.png")
+st.set_page_config(page_title="MHD-INT v5.2", layout="wide", page_icon="assets/logo_mhd_int.png")
 
 # ===================================================================
 # Estilo Premium (CSS Injectado)
@@ -112,8 +117,10 @@ st.markdown("""
 # internos (v4.2 / v5.0 / v5.1) siguen existiendo en el codigo y en los
 # CAMBIOS_*.md para trazabilidad tecnica, pero no se muestran en la
 # interfaz -- para el usuario final es una sola version, la 5.0.
+# ACTUALIZACION (Roney, sep-2026): la version publica pasa a 5.2 para
+# alinearse con el paquete Pro v5.2. Mismo criterio: un unico numero.
 # ===================================================================
-VERSION_PUBLICA = "5.0"
+VERSION_PUBLICA = "5.2"
 
 col_logo, col_titulo = st.columns([1, 3])
 with col_logo:
@@ -140,7 +147,7 @@ if EDICION == "PRUEBA":
 # ===================================================================
 
 st.sidebar.image("assets/logo_mhd_int.png", width=70)
-modo = st.sidebar.radio("Modo", ["📚 Educación", "Simulación", "Sintético", "Mapa MHI", "Sensibilidad", "Validación", "📖 Glosario"])
+modo = st.sidebar.radio("Modo", ["🗺️ Ruta de Aprendizaje", "📚 Educación", "Simulación", "Sintético", "Mapa MHI", "Sensibilidad", "Validación", "🌌 Biblioteca de Fotos", "📖 Glosario"])
 
 st.sidebar.markdown("---")
 st.sidebar.caption(f"MHD-INT v{VERSION_PUBLICA} · by Solaris Core")
@@ -183,7 +190,23 @@ if st.session_state.get("mostrar_historial", False):
     st.markdown("---")
 # ==================================================================================================
 
-if modo == "📚 Educación":
+if "primera_visita_vista" not in st.session_state:
+    st.session_state["primera_visita_vista"] = False
+
+if not st.session_state["primera_visita_vista"] and modo != "🗺️ Ruta de Aprendizaje":
+    _col_banner, _col_cerrar = st.columns([5, 1])
+    with _col_banner:
+        st.info("👋 ¿Primera vez acá? Con tantas pestañas puede costar saber por dónde arrancar — probá la 🗺️ Ruta de Aprendizaje, te lleva paso a paso.")
+    with _col_cerrar:
+        if st.button("Cerrar", key="cerrar_banner_primera_visita"):
+            st.session_state["primera_visita_vista"] = True
+            st.rerun()
+
+if modo == "🗺️ Ruta de Aprendizaje":
+    st.session_state["primera_visita_vista"] = True
+    render_ruta_aprendizaje()
+
+elif modo == "📚 Educación":
     render_educacion()
 
 elif modo == "Simulación":
@@ -203,9 +226,9 @@ elif modo == "Simulación":
     # ==================== NUEVO v4.2 + v5.0: modelo termico + atmosfera ====================
     st.sidebar.subheader("🧠 Modelo de dínamo y atmósfera")
     usar_termico = st.sidebar.checkbox(
-        "Activar modelo térmico (Christensen 2009)",
+        "Activar modelo térmico (Christensen 2009) · EXPERIMENTAL",
         value=False,
-        help="Balance energético real del núcleo (Q_CMB, manto). Desactivado = interruptor empírico (v4.1)."
+        help="Balance energético del núcleo (Q_CMB, manto). Desactivado = interruptor empírico (v4.1). EXPERIMENTAL (auditoria oct-2026): el balance termico actual sobreestima el dinamo en planetas con tapa estancada (p. ej. Marte queda con campo). Usar solo como exploracion; los resultados validados usan el modelo por defecto."
     )
     usar_atmosfera = st.sidebar.checkbox(
         "Activar pérdida atmosférica (escape XUV)",
@@ -255,7 +278,7 @@ elif modo == "Simulación":
             st.markdown("### 🛡️ Índice de Habitabilidad Magnética y Planetaria (MHI)")
             mhi = calcular_mhi(resultado)
             m1, m2, m3 = st.columns([1.5, 1, 1])
-            m1.metric("MHI", f"{mhi['mhi_total']:.1f} / 100", categoria_mhi(mhi['mhi_total']))
+            metric_categoria(m1, "MHI", f"{mhi['mhi_total']:.1f} / 100", categoria_mhi(mhi['mhi_total']), calidad_mhi(mhi['mhi_total']))
             m1.progress(int(mhi["mhi_total"]) / 100)
             m2.metric("Escudo activo", f"{mhi['escudo_mag_pct']:.1f}% del tiempo")
             m2.metric("Dínamo activo", f"{mhi['campo_activo_pct']:.1f}% del tiempo")
@@ -283,10 +306,10 @@ elif modo == "Simulación":
             M_atm_tierras = resultado.M_atm_final_kg / 5.15e18
             c1.metric("Masa atmosférica (Tierras)", f"{M_atm_tierras:.4f}")
             if resultado.atm_perdida:
-                c2.metric("Atmósfera", "❌ PERDIDA", delta="Estéril")
+                metric_categoria(c2, "Atmósfera", "❌ PERDIDA", "Estéril", "malo")
                 st.error("⚠️ El planeta ha perdido su atmósfera por foto-evaporación. MHI = 0.")
             else:
-                c2.metric("Atmósfera", "✅ Retenida", delta="Protegida")
+                metric_categoria(c2, "Atmósfera", "✅ Retenida", "Protegida", "bueno")
         # ================================================================================
 
         # ==================== NUEVO v5.1: evolución de la oblicuidad ====================
@@ -322,6 +345,14 @@ elif modo == "Simulación":
             else:
                 st.success(f"✅ Oblicuidad estable ({eps_final_res:.1f}°). Clima habitable.")
         # ==================================================================================
+
+        # ---- Órbita en 3D ----
+        with st.expander("🪐 Ver órbita en 3D", expanded=False):
+            render_orbita_3d(resultado, planeta)
+
+        # ---- Momentos capturables ----
+        with st.expander("🎬 Momentos capturables de esta corrida", expanded=False):
+            render_eventos(resultado, planeta)
 
         # ==================== Guardar en Historial ====================
         st.markdown("---")
@@ -556,7 +587,7 @@ elif modo == "Sintético":
                 mhi = calcular_mhi(resultado)
                 st.markdown("### 🛡️ Índice de Habitabilidad (MHI)")
                 cm1, cm2, cm3 = st.columns(3)
-                cm1.metric("MHI Total", f"{mhi['mhi_total']:.1f} / 100", categoria_mhi(mhi['mhi_total']))
+                metric_categoria(cm1, "MHI Total", f"{mhi['mhi_total']:.1f} / 100", categoria_mhi(mhi['mhi_total']), calidad_mhi(mhi['mhi_total']))
                 cm2.metric("Escudo activo", f"{mhi['escudo_mag_pct']:.1f}%")
                 cm3.metric("Campo activo", f"{mhi['campo_activo_pct']:.1f}%")
 
@@ -593,8 +624,8 @@ elif modo == "Mapa MHI":
     if st.sidebar.button("🔥 Generar mapa"):
         barra = st.progress(0.0, text="Simulando...")
 
-        def _actualizar(frac):
-            barra.progress(min(frac, 1.0), text=f"Simulando... {frac*100:.0f}%")
+        def _actualizar(frac, mensaje=None):
+            barra.progress(min(frac, 1.0), text=mensaje or f"Simulando... {frac*100:.0f}%")
 
         with st.spinner("Generando mapa MHI..."):
             df_mapa = generar_mapa_mhi(
@@ -688,6 +719,9 @@ elif modo == "Validación":
     if st.sidebar.button("Validar todo"):
         resultados = validar_todos()
         st.json(resultados)
+
+elif modo == "🌌 Biblioteca de Fotos":
+    render_biblioteca_fotos()
 
 elif modo == "📖 Glosario":
     st.subheader("Diccionario de términos")

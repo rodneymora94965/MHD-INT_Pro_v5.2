@@ -1,95 +1,53 @@
-# MHD-INT
+# MHD-INT — versión pública
 
 Simulador de interacción planeta–estrella: evolución acoplada de órbita,
-rotación, campo magnético, calor de marea, núcleo térmico, escape
-atmosférico y oblicuidad, validado contra datos observacionales del
-Sistema Solar y aplicado a exoplanetas conocidos.
+rotación, campo magnético, mareas, escape atmosférico y oblicuidad, con el
+Índice de Habitabilidad Magnética (MHI).
 
-**Autor:** Roney Rigg Mora
-**Versión:** 5.1 — Julio 2026
-**Licencia:** AGPL-3.0 (código de este repositorio) + licencia comercial
-opcional — ver [`TERMINOS_DE_LICENCIAMIENTO.md`](./TERMINOS_DE_LICENCIAMIENTO.md)
+**Autor:** Roney Rigg Mora · Solaris Core
+**Versión:** 5.2.2 (octubre 2026)
+**Licencia:** AGPL-3.0 — ver [`LICENSE`](./LICENSE) y [`TERMINOS_DE_LICENCIAMIENTO.md`](./TERMINOS_DE_LICENCIAMIENTO.md)
 
----
+## Qué incluye esta versión
 
-## ¿Qué es MHD-INT?
+- El motor físico completo (`engine.py`, `numba_functions.py`, `atmosfera.py`,
+  `termica.py`, `stellar_evolution.py`, `habitabilidad.py`).
+- La interfaz básica (`app_streamlit.py`): Simulación, Modo Sintético, Mapa MHI,
+  Sensibilidad, Validación, Educación, Ruta de Aprendizaje y Biblioteca de Fotos.
+- Una base de datos de **47 planetas**: los 8 del Sistema Solar y 39 exoplanetas
+  con masa, radio y órbita tomados de sus publicaciones.
+- Las pruebas automáticas (`tests/`).
 
-MHD-INT modela cómo el campo magnético de un planeta evoluciona a lo
-largo del tiempo en función de su órbita, su estructura interna y la
-estrella que lo alberga — incluyendo generación de dínamo por
-convección núcleo-manto, torque de marea estelar, escape atmosférico
-impulsado por radiación XUV, y evolución estelar tipo Skumanich.
+Las versiones **STANDARD** y **PRO** (ejecutable para Windows, base de 300
+planetas, comparador, N-cuerpos, efemerides JPL, reportes y exportaciones
+avanzadas) se distribuyen por separado: <https://solariscore.com.co>.
 
 ## Instalación
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Uso
-
-```bash
 streamlit run app_streamlit.py
 ```
 
-La interfaz incluye 5 modos: Simulación, Modo Sintético (diseña tu
-propio planeta), Mapa de Calor MHI, Análisis de Sensibilidad, y
-Validación.
+## Pruebas
 
-## Modelo de licenciamiento
+```bash
+python -m pytest
+```
 
-Este repositorio contiene el **motor físico completo bajo AGPL-3.0**:
-cualquiera puede ejecutarlo, estudiarlo, modificarlo y redistribuirlo,
-incluso ofrecerlo como servicio de red, siempre que cumpla las
-condiciones de la AGPL (código fuente disponible para los usuarios de
-ese servicio).
+Algunas pruebas se omiten (`skipped`) porque usan planetas que solo están en
+la base completa; es lo esperado.
 
-Además del código abierto, existe un modelo comercial opcional —
-ejecutables precompilados, base de datos extendida de exoplanetas,
-soporte y formación — que **no restringe ni oculta nada del código
-público**; es una vía alternativa para quienes prefieran no lidiar con
-las obligaciones de AGPL. Ver
-[`TERMINOS_DE_LICENCIAMIENTO.md`](./TERMINOS_DE_LICENCIAMIENTO.md)
-para el detalle completo de cada nivel.
+## Qué valida y qué no
 
-## Alcance y limitaciones de la validación
+`validacion.py` compara 6 cuerpos del Sistema Solar partiendo de sus valores
+actuales: es una **prueba de consistencia**, no una predicción independiente.
+Ningún exoplaneta tiene validación cuantitativa contra observaciones. El modelo
+térmico del núcleo está marcado como **EXPERIMENTAL**. Los detalles y las
+limitaciones conocidas están en [`docs/MARCO_TEORICO.md`](./docs/MARCO_TEORICO.md)
+y el historial en [`docs/CAMBIOS.md`](./docs/CAMBIOS.md).
 
-El simulador reproduce, dentro de tolerancias documentadas en
-[`docs/MARCO_TEORICO.md`](./docs/MARCO_TEORICO.md), la rotación, campo
-magnético y dinámica orbital de Tierra, Venus, Marte y Júpiter contra
-datos observacionales reales (baseline: error <0.45%).
+## Cómo citar
 
-**Nota de transparencia:** esa validación depende de los módulos
-`termica.py` y `atmosfera.py`, incluidos en este repositorio. La
-rotación retrógrada de Venus está documentada como fuera del alcance
-del modelo (requiere mareas térmicas atmosféricas) y excluida de forma
-explícita de esa comparación, en vez de forzarse a coincidir. Ver
-`docs/CAMBIOS.md` para el detalle de cada corrección de auditoría
-aplicada históricamente al modelo.
-
-## Documentación
-
-- [`docs/MANUAL_USUARIO.md`](./docs/MANUAL_USUARIO.md) — guía de uso
-  completa: instalación y explicación de cada modo de la interfaz.
-- [`docs/MARCO_TEORICO.md`](./docs/MARCO_TEORICO.md) — ecuaciones,
-  referencias científicas, validación y limitaciones conocidas.
-- [`docs/CAMBIOS.md`](./docs/CAMBIOS.md) — historial de versiones y
-  correcciones de auditoría.
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — cómo contribuir (incluye
-  requisito de CLA para contribuciones de código).
-- [`TERMINOS_DE_LICENCIAMIENTO.md`](./TERMINOS_DE_LICENCIAMIENTO.md) —
-  condiciones de la licencia pública y de los niveles comerciales.
-
-## Base de datos
-
-47 cuerpos (8 planetas del Sistema Solar + 39 exoplanetas confirmados)
-en la versión actual. Cada entrada especifica su fuente; el modelo no
-asigna valores por defecto no fundamentados para parámetros sin dato
-observacional disponible (ver política en `CONTRIBUTING.md`).
-
-## Contribuir
-
-Los reportes de bugs y correcciones de documentación son bienvenidos
-sin trámite adicional. Las contribuciones de código requieren firma de
-CLA — ver [`CONTRIBUTING.md`](./CONTRIBUTING.md) para el porqué y el
-procedimiento.
+Mora, R. R. (2026). *MHD-INT: simulador de interacción planeta–estrella*,
+versión 5.2.2. Solaris Core.

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict, Optional
 import warnings
+from progreso_util import invocar_callback  # Sugerencia 4: logs en vivo (fracción 0-1 + mensaje opcional)
 
 from models import ResultadoSimulacion, SerieTemporal
 from stellar_evolution import EstrellaEvolutiva
@@ -79,6 +80,20 @@ def estimar_B_estrella(tipo_espectral: str) -> float:
         return 1.0e-4
 
 
+R_SOL = 6.957e8
+Q_ESTRELLA_DEFECTO = 1.0e7  # Q' estelar modificado (Penev et al. 2018; con 1e6 K2-141 b y TOI-2431 b
+                            # caerian en < 10 Myr, incompatible con sistemas de varios Gyr)
+
+
+def estimar_R_estrella(masa_estrella_kg: float) -> float:
+    """Radio estelar de secuencia principal estimado por la masa (m).
+    AUDITORIA oct-2026: la base no guarda radios estelares; relacion
+    masa-radio R/Rsol = M^0.9 (M<1 Msol; enanas K/M, cf. Boyajian et al.
+    2012) o M^0.57 (M>=1 Msol). Error tipico < 10 % en radio."""
+    m = max(masa_estrella_kg / M_SOL, 0.05)
+    return R_SOL * (m ** 0.9 if m < 1.0 else m ** 0.57)
+
+
 def estimar_L_estrella(masa_estrella_kg: float) -> float:
     """Estima la luminosidad estelar en luminosidades solares (L/L_sol) a
     partir de la masa real de la estrella, usando la relación
@@ -108,18 +123,23 @@ def estimar_L_estrella(masa_estrella_kg: float) -> float:
 
 class _EstadoInterno:
     __slots__ = ["t", "a", "w_p", "B_p", "P_ram", "E_p", "R_m_norm", "tau_mag",
-                 "tiempo_migracion", "e", "Q_tidal", "a_luna",
+                 "tiempo_migracion", "e", "Q_tidal", "a_lunas",
                  "T_cmb", "B_gen", "Rm", "q_conv", "M_atm", "atm_perdida", "eps"]
 
     def __init__(self, t, a, w_p, B_p, P_ram, E_p, R_m_norm, tau_mag, tiempo_migracion,
-                 e=0.0, Q_tidal=0.0, a_luna=0.0,
+                 e=0.0, Q_tidal=0.0, a_lunas=None,
                  T_cmb=0.0, B_gen=0.0, Rm=0.0, q_conv=0.0, M_atm=0.0, atm_perdida=False,
                  eps=0.0):
         self.t, self.a, self.w_p, self.B_p = t, a, w_p, B_p
         self.P_ram, self.E_p, self.R_m_norm = P_ram, E_p, R_m_norm
         self.tau_mag, self.tiempo_migracion = tau_mag, tiempo_migracion
         self.e, self.Q_tidal = e, Q_tidal
-        self.a_luna = a_luna
+        # NUEVO (multi-luna, ago-2026): lista de distancias orbitales, una
+        # por luna en self.lunas (mismo orden). Antes era un escalar
+        # "a_luna" (una sola luna posible). Lista vacía si el planeta no
+        # tiene lunas -- nunca None, para no tener que chequear en cada
+        # sitio que la usa.
+        self.a_lunas = list(a_lunas) if a_lunas is not None else []
         self.T_cmb, self.B_gen, self.Rm, self.q_conv = T_cmb, B_gen, Rm, q_conv
         self.M_atm, self.atm_perdida = M_atm, atm_perdida
         self.eps = eps
@@ -240,7 +260,7 @@ class MotorMHD:
             self.nucleo = None
 
         M_atm_ini = self.parametros.get("M_atm_inicial", 1e-6 * self.M)
-        F_XUV = self.parametros.get("F_XUV_inicial", 1.0)
+        F_XUV = self.parametros.get("F_XUV_inicial", 0.005)  # AUDITORIA oct-2026: antes 1.0 W/m2 (200x el Sol en calma)
         eta_esc = self.parametros.get("eficiencia_escape", 0.15)
         tipo_estrella_atm = self.parametros.get("_tipo_espectral_estrella", "G2V")
         a_ua_inicial = self.parametros.get("a_inicial", 1.0 * UA) / UA
@@ -268,8 +288,16 @@ class MotorMHD:
         self.eps_inicial = np.radians(self.parametros.get("eps_inicial_deg", 0.0))
         self.eps_conocido = self.parametros.get("eps_conocido", False)
 
-        self.luna = self.lunas_db.get(nombre_planeta)
-        self.a_luna_inicial = self.luna["a_luna_inicial"] if self.luna else 0.0
+        # NUEVO (multi-luna, ago-2026): self.lunas es SIEMPRE una lista
+        # (posiblemente vacía). Compatibilidad hacia atrás: si lunas_db
+        # trae el formato viejo (un solo dict, no lista -- por ejemplo un
+        # archivo de sesión .mhd guardado antes de este cambio), se
+        # envuelve en una lista de un elemento en vez de fallar.
+        entrada_lunas = self.lunas_db.get(nombre_planeta, [])
+        if isinstance(entrada_lunas, dict):
+            entrada_lunas = [entrada_lunas]
+        self.lunas = list(entrada_lunas)
+        self.a_lunas_inicial = [float(l["a_luna_inicial"]) for l in self.lunas]
 
         if self.nombre_planeta == "Mercurio":
             self.k2_sobre_q = 0.0
@@ -290,6 +318,20 @@ class MotorMHD:
         self.torque_magnetico_on = self.parametros.get("torque_magnetico", True)
         self.torque_marea_estelar_on = self.parametros.get("torque_marea_estelar", True)
         self.torque_lunar_on = self.parametros.get("torque_lunar", True)
+        # --------------------------------------------------------------
+        # NUEVO FASE 1: torque atmosferico gravitatorio-termico
+        # --------------------------------------------------------------
+        self.torque_atmosferico_on = self.parametros.get("torque_atmosferico", False)
+        self.K_atm_vis = float(self.parametros.get("K_atm_vis", 0.0))
+        self.K_atm_term = float(self.parametros.get("K_atm_term", 0.0))
+        self.tau_rad_atm_s = float(self.parametros.get("tau_rad_atm_s", 3.0e5))
+        self.atm_rho_norm = float(self.parametros.get("atm_rho_norm", 1.0e4))
+        self.w_atm_eq = self.parametros.get("w_atm_eq", None)
+        self.w_atm_eq_mode = self.parametros.get("w_atm_eq_mode", "retrograde_sync")
+        self.atm_lag_model = self.parametros.get("atm_lag_model", "sin2delta")
+        self.M_atm_fija = float(self.parametros.get(
+            "M_atm", self.parametros.get("M_atm_inicial", 0.0)))
+
 
         self.MU_0 = MU_0
         self.G = G
@@ -335,6 +377,34 @@ class MotorMHD:
         # la usa.
         self.L_estrella = estimar_L_estrella(self.M_estrella)
 
+        # AUDITORIA oct-2026 (bug de migracion): decaimiento orbital por la
+        # marea que el PLANETA levanta en la ESTRELLA (Q' estelar), no por la
+        # marea del planeta. Ver _evolucion_orbital_marea_estelar().
+        self.R_estrella = float(self.parametros.get("R_estrella_m", estimar_R_estrella(self.M_estrella)))
+        self.Q_estrella = float(self.parametros.get("Q_estrella", Q_ESTRELLA_DEFECTO))
+
+    def _evolucion_orbital_marea_estelar(self, a: float, dt: float, w_estrella: float):
+        """AUDITORIA oct-2026. Decaimiento (o expansion) orbital por la marea
+        que el planeta levanta en la estrella (Goldreich & Soter 1966;
+        Jackson et al. 2009; Penev et al. 2018):
+
+            da/dt = -s * (9/2) * (M_p/M*) * (R*/a)^5 * n * a / Q'*
+
+        con s = +1 si la estrella gira mas lento que la orbita (el planeta
+        cae) y s = -1 si gira mas rapido (el planeta se aleja). Como
+        a^(13/2) evoluciona linealmente en el tiempo, se integra de forma
+        EXACTA (sin Euler): el resultado no depende de dt y no hay
+        sobrepaso. Devuelve (a_nuevo, tiempo_caracteristico_s)."""
+        n = np.sqrt(G * self.M_estrella / a ** 3)
+        s = 1.0 if abs(w_estrella) < n else -1.0
+        K = 4.5 * (self.M / self.M_estrella) * (self.R_estrella ** 5) * np.sqrt(G * self.M_estrella) / self.Q_estrella
+        dadt = -s * K * a ** (-5.5)
+        tau = a / abs(dadt) if dadt != 0.0 else 1e30
+        x = a ** 6.5 - s * 6.5 * K * dt
+        if x <= self.a_colapso ** 6.5:
+            return self.a_colapso, tau
+        return float(x ** (1.0 / 6.5)), float(tau)
+
     def calcular_tiempo_migracion(self, a: float, Q: float = 100.0) -> float:
         n = np.sqrt(G * self.M_estrella / a**3)
         tipo = self.parametros.get("tipo_planeta", "")
@@ -348,12 +418,13 @@ class MotorMHD:
         tau_mig = (2.0 / 63.0) * Q_efectivo * (self.M / self.M_estrella) * (a / self.R_p)**5 * (1.0 / n)
         return float(np.clip(tau_mig, 1e3 * YR_SEC, 1e20 * YR_SEC))
 
-    def calcular_torque_lunar(self, a_luna: float, w_p: float) -> float:
-        if self.luna is None or a_luna <= 0:
+    def calcular_torque_lunar(self, luna: dict, a_luna: float, w_p: float) -> float:
+        """Torque de marea de UNA luna sobre la rotación del planeta."""
+        if a_luna <= 0:
             return 0.0
-        M_luna = self.luna["masa"]
-        k2 = self.luna["k2"]
-        Q_p = self.luna["Q_p"]
+        M_luna = luna["masa"]
+        k2 = luna["k2"]
+        Q_p = luna["Q_p"]
         n_luna = np.sqrt(G * self.M / a_luna ** 3)
         tau_magnitud = 1.5 * (k2 / Q_p) * G * (M_luna ** 2) * (self.R_p ** 5) / (a_luna ** 6)
         delta = w_p - n_luna
@@ -364,14 +435,143 @@ class MotorMHD:
         else:
             return 0.0
 
-    def calcular_recesion_lunar(self, a_luna: float, tau_lunar: float) -> float:
-        if self.luna is None or a_luna <= 0:
+    def calcular_recesion_lunar(self, luna: dict, a_luna: float, tau_lunar: float) -> float:
+        """Recesión/decaimiento orbital de UNA luna, dado el torque que actúa sobre ella."""
+        if a_luna <= 0:
             return 0.0
-        M_luna = self.luna["masa"]
+        M_luna = luna["masa"]
         factor = 0.5 * M_luna * np.sqrt(G * self.M / a_luna)
         if factor == 0:
             return 0.0
         return -tau_lunar / factor
+
+    def _evolucion_lunas(self, a_lunas: list, w_p: float, dt: float,
+                          incluir_torque_en_wp: bool,
+                          max_frac_cambio: float = 0.0003, max_subpasos: int = 150000):
+        """
+        Evolución CONJUNTA y sub-paso de {w_p, a_lunas} debida SOLO al
+        torque lunar, sobre un intervalo dt. Devuelve (a_lunas_nuevo,
+        w_p_nuevo). El resto de los torques (magnético, marea estelar,
+        atmosférico) NO pasan por acá -- _paso_temporal los aplica antes,
+        con un paso de Euler simple sobre dt como siempre, y el w_p
+        resultante de eso es el `w_p` que se le pasa a esta función como
+        punto de partida (ver _paso_temporal).
+
+        FIX (paso adaptativo lunar, ago-2026) -- POR QUÉ w_p Y a_lunas
+        SE SUBDIVIDEN JUNTOS: una primera versión de este fix subdividía
+        SOLO a_lunas (dejando w_p con su Euler grueso de siempre, usando
+        el tau_lunar PROMEDIADO de los sub-pasos). Se probó contra los
+        casos ya documentados como inestables y w_p seguía disparándose
+        a valores imposibles -- el promedio de tau_lunar sobre el
+        intervalo puede seguir siendo enorme si a_luna pasó cerca del
+        planeta en algún sub-paso, y aplicarlo con un solo Euler grueso
+        sobre TODO dt igual desestabiliza w_p. La solución real es
+        subdividir tau_lunar -> w_p exactamente con la misma grilla fina
+        que a_lunas, sub-paso a sub-paso.
+
+        CRITERIO DE SUB-PASOS -- por fracción de cambio de a_luna, NO
+        por período orbital: se descartó un criterio tipo CFL basado en
+        el período orbital de la luna (mismo espíritu que dt_sugerido en
+        n_cuerpos_ligero_optimizado.py) porque para una luna real
+        (período de días) contra un dt exterior típico de 10.000 años
+        pedía millones de sub-pasos -- inviable, y el techo de seguridad
+        lo hubiera dejado en miles de sub-pasos SIEMPRE, para TODO
+        planeta con luna, incluida la Tierra. No importa resolver la
+        fase orbital rápida de la luna (el motor no la trackea, solo el
+        semieje a_luna que evoluciona LENTO por marea) -- importa que
+        a_luna no cambie más de `max_frac_cambio` (0.03%) en un sub-paso.
+        En el caso normal (Luna real, galileanas...) esa fracción es
+        minúscula (~1e-6 por paso de 10.000 años), así que n_subpasos=1
+        y CERO costo extra sobre el comportamiento de antes -- verificado
+        con pruebas de regresión (Tierra, Júpiter dan resultados idénticos
+        al bit antes/después de este cambio).
+
+        max_subpasos pone un techo al costo computacional para casos
+        realmente extremos (luna casi rozando el planeta) -- en ese
+        límite el resultado deja de estar totalmente resuelto, pero el
+        chequeo de estabilidad de sintetico_ui.py (w_final > 1e-2 rad/s)
+        sigue funcionando como red de seguridad para avisar.
+
+        incluir_torque_en_wp: refleja self.torque_lunar_on -- si está
+        apagado, a_lunas evoluciona igual (proceso físico separado, ver
+        nota de Mejora 4 en _paso_temporal) pero w_p sale sin cambios.
+
+        NOTA: no hay interacción gravitatoria entre lunas (ej. resonancias
+        de Laplace entre Io/Europa/Ganímedes) -- cada luna evoluciona de
+        forma independiente por marea con el planeta, igual que en el
+        modelo de una sola luna. Añadir esa interacción es trabajo aparte
+        (Fase 1.3 del plan v6.0, sección "interacción gravitatoria entre
+        lunas -- opcional"), no incluido acá.
+        """
+        if not self.lunas or dt <= 0:
+            return list(a_lunas), w_p
+
+        n_subpasos = 1
+        for luna, a_luna in zip(self.lunas, a_lunas):
+            if a_luna <= 0:
+                continue
+            tau_l0 = self.calcular_torque_lunar(luna, a_luna, w_p)
+            da_dt0 = self.calcular_recesion_lunar(luna, a_luna, tau_l0)
+            frac_cambio = abs(da_dt0 * dt / a_luna)
+            if frac_cambio > max_frac_cambio:
+                n_subpasos = max(n_subpasos, int(np.ceil(frac_cambio / max_frac_cambio)))
+        n_subpasos = min(n_subpasos, max_subpasos)
+
+        dt_sub = dt / n_subpasos
+        a_lunas_actual = list(a_lunas)
+        w_p_actual = w_p
+        for _ in range(n_subpasos):
+            tau_lunar_paso = 0.0
+            a_lunas_siguiente = []
+            for luna, a_luna in zip(self.lunas, a_lunas_actual):
+                tau_l = self.calcular_torque_lunar(luna, a_luna, w_p_actual)
+                da_luna_dt = self.calcular_recesion_lunar(luna, a_luna, tau_l)
+                a_lunas_siguiente.append(max(a_luna + da_luna_dt * dt_sub, self.R_p))
+                tau_lunar_paso += tau_l
+            a_lunas_actual = a_lunas_siguiente
+            if incluir_torque_en_wp:
+                w_p_actual = w_p_actual + (tau_lunar_paso / self.I) * dt_sub
+                # mismo piso que en _paso_temporal para evitar division
+                # por cero mas adelante en el motor (E_p, etc.)
+                if abs(w_p_actual) < 1e-20:
+                    w_p_actual = 1e-20 if w_p_actual >= 0 else -1e-20
+
+        return a_lunas_actual, w_p_actual
+
+    # ------------------------------------------------------------------
+    # NUEVO FASE 1: torque atmosferico gravitatorio-termico
+    # ------------------------------------------------------------------
+    def calcular_torque_atmosferico_termico(self, estado, w_p, n):
+        if not self.torque_atmosferico_on:
+            return 0.0
+        # AUDITORIA oct-2026: con el modelo de atmosfera activo, una
+        # atmosfera perdida (M_atm=0) ya no vuelve a la masa inicial.
+        if self.usar_atmosfera:
+            M_atm = estado.M_atm
+        else:
+            M_atm = self.M_atm_fija
+        if M_atm <= 0.0:
+            return 0.0
+        rho_col = M_atm / (4.0 * np.pi * self.R_p ** 2)
+        rho_norm = rho_col / max(self.atm_rho_norm, 1e-12)
+        a_ua = max(estado.a / UA, 1e-6)
+        m_star = self.M_estrella / M_SOL
+        alpha_vis = -self.K_atm_vis * w_p * rho_norm * (a_ua ** -2) * m_star
+        if self.w_atm_eq is not None:
+            w_eq = float(self.w_atm_eq)
+        else:
+            w_eq = 0.0 if self.w_atm_eq_mode == "zero" else -abs(n)
+        if self.tau_rad_atm_s <= 0.0 or self.K_atm_term == 0.0:
+            return self.I * alpha_vis
+        x = (w_p - w_eq) * self.tau_rad_atm_s
+        if self.atm_lag_model == "tanh":
+            lag = float(np.tanh(x))
+        else:
+            lag = (2.0 * x) / (1.0 + x * x) if abs(x) <= 1e12 else 0.0
+        alpha_term = -self.K_atm_term * lag * rho_norm * (a_ua ** -3) * m_star
+        return self.I * (alpha_vis + alpha_term)
+
+
 
     def _paso_temporal(self, estado: _EstadoInterno, dt: float) -> _EstadoInterno:
         t = estado.t + dt
@@ -426,18 +626,28 @@ class MotorMHD:
         # ============================================================
         de_dt = calcular_de_dt_numba(a, e, self.R_p, self.M, self.M_estrella, self.k2_sobre_q, G)
 
-        tiempo_migracion = self.calcular_tiempo_migracion(a)
-        da_dt = calcular_migracion_orbital_numba(a, tiempo_migracion, YR_SEC)
+        # AUDITORIA oct-2026: migracion por marea ESTELAR, integrada exacta
+        # (antes: formula de circularizacion con marea del planeta y Euler
+        # explicito -> 91/300 planetas caian a la estrella y dependia de dt).
+        if self.colapsado:
+            a_migr, tiempo_migracion = self.a_colapso, 0.0
+        else:
+            a_migr, tiempo_migracion = self._evolucion_orbital_marea_estelar(a, dt, w_estrella_t)
 
-        a_luna = estado.a_luna
-        tau_lunar = self.calcular_torque_lunar(a_luna, w_p)
-        # NOTA (Mejora 4): da_luna_dt (recesión orbital de la Luna) se
-        # calcula siempre, independiente del toggle torque_lunar_on. El
-        # toggle aísla el efecto del torque lunar sobre la ROTACIÓN del
-        # planeta (para depuración/didáctica); la evolución orbital de la
-        # Luna en sí es un proceso físico separado que no tiene sentido
-        # apagar a medias.
-        da_luna_dt = self.calcular_recesion_lunar(a_luna, tau_lunar)
+        a_lunas = estado.a_lunas
+        # NOTA (Mejora 4, ahora multi-luna): la evolución orbital de las
+        # lunas se calcula siempre, independiente del toggle
+        # torque_lunar_on -- ese toggle aísla el efecto del torque lunar
+        # sobre la ROTACIÓN del planeta (para depuración/didáctica); la
+        # evolución orbital de las lunas en sí es un proceso físico
+        # separado que no tiene sentido apagar a medias.
+        #
+        # FIX (paso adaptativo lunar, ago-2026): el torque lunar y su
+        # efecto en w_p ahora se calculan DESPUÉS de los demás torques
+        # (ver más abajo, tras armar tau_otros) -- _evolucion_lunas hace
+        # su propio sub-paso interno acoplando w_p y a_lunas juntos. Acá
+        # arriba solo queda la nota de contexto; el cálculo real se
+        # movió después de tau_atm para tener tau_otros disponible.
 
         # --------------------------------------------------------------
         # CORRECCIÓN v4.1 (Cambio 1): torque de marea sólida de la estrella
@@ -473,27 +683,61 @@ class MotorMHD:
         tau_tide_star = calcular_torque_tide_estelar(
             self.k2_sobre_q, self.M_estrella, self.R_p, a, w_p, n
         )
+        tau_atm = self.calcular_torque_atmosferico_termico(estado, w_p, n)
 
         # --------------------------------------------------------------
         # MEJORA v4.1 (experimentos controlados): cada torque se suma solo
         # si su flag está activa. Con las 3 en True (default) el resultado
         # es idéntico a antes de esta mejora.
+        #
+        # FIX (paso adaptativo lunar, ago-2026): tau_lunar SALIÓ de esta
+        # suma -- antes tau_total incluía tau_lunar y todo w_p se
+        # integraba junto en un solo Euler grueso sobre dt, lo que podía
+        # desestabilizarse con lunas cercanas/masivas (ver docstring de
+        # _evolucion_lunas). Ahora: 1) se integra w_p con los torques
+        # "otros" (magnético, marea estelar, atmosférico) con Euler
+        # grueso como siempre -- CERO cambio de comportamiento para
+        # planetas sin lunas problemáticas; 2) recién con ese w_p ya
+        # actualizado, _evolucion_lunas aplica el torque lunar en sus
+        # propios sub-pasos, acoplado con a_lunas.
         # --------------------------------------------------------------
-        tau_total = 0.0
+        tau_otros = 0.0
         if self.torque_magnetico_on:
-            tau_total += tau_mag * R_ohm
+            tau_otros += tau_mag * R_ohm
         if self.torque_marea_estelar_on:
-            tau_total += tau_tide_star
-        if self.torque_lunar_on:
-            tau_total += tau_lunar
+            tau_otros += tau_tide_star
+        if self.torque_atmosferico_on:
+            tau_otros += tau_atm
 
-        dw_p_dt = tau_total / self.I
-        w_p_nuevo = w_p + dw_p_dt * dt
+        dw_p_dt_otros = tau_otros / self.I
+        w_p_tras_otros = w_p + dw_p_dt_otros * dt
+        # AUDITORIA oct-2026 (bug de rotacion): el torque de marea estelar es
+        # de magnitud fija con signo (w - n); con Euler explicito sobrepasaba
+        # la sincronia y oscilaba (TRAPPIST-1e terminaba en 1.3-80 dias segun
+        # dt, a veces retrogrado). Si en este paso la rotacion CRUZA n por
+        # efecto de la marea, el planeta queda en rotacion sincronica
+        # (bloqueo de marea), que es el estado fisico de equilibrio.
+        if self.torque_marea_estelar_on and tau_tide_star != 0.0:
+            if (w_p - n) * (w_p_tras_otros - n) < 0.0:
+                w_p_tras_otros = n
+        if abs(w_p_tras_otros) < 1e-20:
+            if tau_otros < 0.0:
+                w_p_tras_otros = -1e-20
+            elif tau_otros > 0.0:
+                w_p_tras_otros = 1e-20
+            else:
+                w_p_tras_otros = 1e-20
+
+        a_lunas_nuevo_tmp, w_p_nuevo = self._evolucion_lunas(
+            a_lunas, w_p_tras_otros, dt, incluir_torque_en_wp=self.torque_lunar_on
+        )
         if abs(w_p_nuevo) < 1e-20:
             w_p_nuevo = 1e-20 if w_p_nuevo >= 0 else -1e-20
 
-        a_nuevo = max(a + da_dt * dt, 0.001 * UA)
-        a_luna_nuevo = max(a_luna + da_luna_dt * dt, self.R_p) if self.luna else 0.0
+        a_nuevo = a_migr
+        if a_nuevo <= self.a_colapso:
+            self.colapsado = True
+        a_lunas_nuevo = a_lunas_nuevo_tmp
 
         # --------------------------------------------------------------
         # CORRECCIÓN v4.1 (hallazgo post-validación, opción 3 acordada):
@@ -544,7 +788,7 @@ class MotorMHD:
 
         return _EstadoInterno(t, a_nuevo, w_p_nuevo, B_p_nuevo, P_ram, E_p, R_m_corr,
                                tau_mag, tiempo_migracion, e=e_nuevo, Q_tidal=Q_tidal_total,
-                               a_luna=a_luna_nuevo,
+                               a_lunas=a_lunas_nuevo,
                                T_cmb=T_cmb_nuevo, B_gen=B_gen_sup, Rm=Rm, q_conv=q_conv,
                                M_atm=M_atm_nuevo, atm_perdida=atm_perdida_nueva,
                                eps=eps_nuevo)
@@ -558,6 +802,12 @@ class MotorMHD:
         pasos = max(int(t_max / dt), 1)
         intervalo_guardado = max(pasos // max_puntos_serie, 1) if incluir_serie else None
 
+        # AUDITORIA oct-2026: limite de colapso = el mayor entre el radio
+        # estelar y el limite de Roche fluido del planeta, 2.44 R_p (M*/M_p)^(1/3).
+        self.a_colapso = max(self.R_estrella,
+                             2.44 * self.R_p * (self.M_estrella / max(self.M, 1.0)) ** (1.0 / 3.0))
+        self.colapsado = False
+
         T_cmb_ini = self.nucleo.T_cmb if self.nucleo is not None else 0.0
         M_atm_ini_estado = self.atmosfera.M_atm if self.atmosfera is not None else 0.0
 
@@ -568,7 +818,7 @@ class MotorMHD:
             B_p=self.parametros["B_p_inicial"],
             P_ram=0.0, E_p=0.0, R_m_norm=1.0, tau_mag=0.0, tiempo_migracion=0.0,
             e=self.e_inicial, Q_tidal=0.0,
-            a_luna=self.a_luna_inicial,
+            a_lunas=self.a_lunas_inicial,
             T_cmb=T_cmb_ini, B_gen=0.0, Rm=0.0, q_conv=0.0,
             M_atm=M_atm_ini_estado, atm_perdida=False,
             eps=self.eps_inicial,
@@ -584,7 +834,8 @@ class MotorMHD:
             if serie is not None and (i % intervalo_guardado == 0 or i == pasos - 1):
                 self._registrar_punto(serie, estado)
             if progress_callback and i % max(1, pasos // 100) == 0:
-                progress_callback(i / pasos * 100)
+                frac = i / pasos
+                invocar_callback(progress_callback, frac, f"Integrando órbita... paso {i}/{pasos} ({frac*100:.0f}%)")
 
         return self._construir_resultado(inicial, estado, serie)
 
@@ -600,7 +851,15 @@ class MotorMHD:
         serie.tiempo_migracion.append(estado.tiempo_migracion)
         serie.e.append(estado.e)
         serie.Q_tidal_watts.append(estado.Q_tidal)
-        serie.a_luna_ua.append(estado.a_luna / UA)
+        # a_luna_ua sigue describiendo SOLO la primera luna (compatibilidad
+        # con SerieTemporal/exportar_video.py/exportar_csv.py, que asumen
+        # una sola columna de distancia lunar). Para el detalle de todas
+        # las lunas, ver ResultadoSimulacion.lunas (resumen final, no serie
+        # temporal completa por ahora -- ver nota en _construir_resultado).
+        serie.a_luna_ua.append((estado.a_lunas[0] / UA) if estado.a_lunas else 0.0)
+        # NUEVO (multi-luna, viz 3D, ago-2026): serie completa, todas las
+        # lunas por paso de tiempo -- ver nota en models.py SerieTemporal.
+        serie.a_lunas_ua.append([a / UA for a in estado.a_lunas])
         serie.T_cmb_K.append(estado.T_cmb)
         serie.B_gen_gauss.append(estado.B_gen * 10000)  # Tesla -> Gauss
         serie.Rm_num.append(estado.Rm)
@@ -611,12 +870,36 @@ class MotorMHD:
 
     def _construir_resultado(self, inicial: _EstadoInterno, final: _EstadoInterno,
                               serie: Optional[SerieTemporal]) -> ResultadoSimulacion:
-        se_estrello = final.a < 0.01 * UA
+        # AUDITORIA oct-2026: antes era un umbral fijo a < 0.01 UA, que
+        # marcaba como estrellados a planetas reales que orbitan dentro de
+        # 0.01 UA (GJ 367 b, K2-141 b, TOI-2431 b, Kepler-42 c).
+        se_estrello = bool(self.colapsado or final.a <= self.a_colapso * 1.000001)
         campo_protegido = (not se_estrello) and (final.B_p * 10000 > 0.3)
 
-        recesion_cm_anio = 0.0
-        if self.luna and final.t > 0:
-            recesion_cm_anio = (final.a_luna - inicial.a_luna) / final.t * YR_SEC * 100.0
+        # --------------------------------------------------------------
+        # Multi-luna (ago-2026): resumen por luna, calculado para TODAS
+        # las lunas de self.lunas. Los campos escalares a_luna_*/
+        # recesion_lunar_cm_anio de abajo se mantienen apuntando a la
+        # PRIMERA luna (índice 0) -- compatibilidad con CSV/JSON/UI
+        # existentes, que solo conocen "una luna". El detalle completo
+        # (todas las lunas) vive en resultado.lunas.
+        # --------------------------------------------------------------
+        lunas_resumen = []
+        for i, luna in enumerate(self.lunas):
+            a_ini_i = inicial.a_lunas[i]
+            a_fin_i = final.a_lunas[i]
+            recesion_i = ((a_fin_i - a_ini_i) / final.t * YR_SEC * 100.0) if final.t > 0 else 0.0
+            lunas_resumen.append({
+                "nombre": luna.get("nombre", f"Luna_{i+1}"),
+                "masa_kg": luna["masa"],
+                "a_inicial_ua": a_ini_i / UA,
+                "a_final_ua": a_fin_i / UA,
+                "recesion_cm_anio": recesion_i,
+            })
+
+        a_luna_inicial_ua = lunas_resumen[0]["a_inicial_ua"] if lunas_resumen else 0.0
+        a_luna_final_ua = lunas_resumen[0]["a_final_ua"] if lunas_resumen else 0.0
+        recesion_cm_anio = lunas_resumen[0]["recesion_cm_anio"] if lunas_resumen else 0.0
 
         return ResultadoSimulacion(
             nombre_planeta=self.nombre_planeta,
@@ -637,9 +920,10 @@ class MotorMHD:
             e_inicial=inicial.e,
             e_final=final.e,
             Q_tidal_final_watts=final.Q_tidal,
-            a_luna_inicial_ua=inicial.a_luna / UA,
-            a_luna_final_ua=final.a_luna / UA,
+            a_luna_inicial_ua=a_luna_inicial_ua,
+            a_luna_final_ua=a_luna_final_ua,
             recesion_lunar_cm_anio=recesion_cm_anio,
+            lunas=lunas_resumen,
             T_cmb_final_K=final.T_cmb,
             B_gen_final_gauss=final.B_gen * 10000,
             Rm_final=final.Rm,

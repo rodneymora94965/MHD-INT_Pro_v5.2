@@ -1,10 +1,10 @@
-MARCO TEÓRICO — MHD-INT v5.0
+MARCO TEÓRICO — MHD-INT v5.2
 =============================================================================
 Simulador de Interacción Planeta–Estrella
 AUTOR: Roney Rigg Mora
-FECHA: Julio 2026
-VERSIÓN: 5.0 (incorpora modelo térmico del núcleo, atmósfera y oblicuidad
-        sobre la base de v4.1)
+FECHA: Septiembre 2026
+VERSIÓN: 5.2 (base teórica de 5.0 — núcleo térmico, atmósfera y oblicuidad
+        sobre v4.1 — más ajustes v5.2, ver §0)
 ESTADO: VALIDADO CONTRA CÓDIGO FUENTE — validar_todos() aprueba Tierra, Venus,
         Marte y Júpiter en su totalidad (incluyendo B_gauss), con los
         módulos nuevos (térmico/atmósfera/oblicuidad) desactivados por
@@ -353,6 +353,13 @@ estrellas de tipo solar y β=0.8 para enanas M (XUV saturado por más
 tiempo, Loyd et al. 2020), y escala con la distancia orbital como
 (a/UA)⁻².
 
+**Auditoría oct-2026:** el código dividía F_XUV,0 por a² al crear la
+atmósfera y otra vez en cada paso (escalaba como a⁻⁴), y el valor por
+defecto en `engine.py` era 1.0 W/m² en vez de 0.005 (200 veces más).
+Ambos corregidos; ahora el código hace lo que describe esta sección. Con
+el modelo de atmósfera activo, el torque atmosférico usa la masa
+atmosférica actual (antes volvía a la inicial al perderse la atmósfera).
+
 F_XUV,0 = 0.005 W/m² a 1 UA (orden de magnitud del flujo XUV solar en
 calma, Ribas et al. 2005). Con este valor la Tierra retiene ~72% de su
 atmósfera a 4.5 Gyr y Venus la retiene casi entera; Marte la pierde por
@@ -383,8 +390,11 @@ Júpiter (3.13°), Urano (97.77°) y Venus (2.64°) tienen oblicuidad inicial
 real en `database.py` (`eps_conocido=True`). El resto de los planetas
 (incluidos todos los exoplanetas) parte de 0° con `eps_conocido=False`.
 
-**Penalización en el MHI:** una oblicuidad final fuera del rango [5°,60°]
-resta 20 puntos al MHI, mostrarido inestabilidad climática — pero
+**Penalización en el MHI:** una oblicuidad final mayor que 60° resta 20
+puntos al MHI, mostrando inestabilidad climática (auditoría oct-2026: se
+quitó la penalización por oblicuidad < 5°, que no tiene base física — el
+invernadero de Venus viene de su cercanía al Sol, no de su eje — y
+penalizaba a Júpiter) — pero
 **solo si `eps_conocido=True`**. Esto evita penalizar planetas cuyo 0°
 interno es un valor por defecto sin respaldo observacional, no un dato
 real. Verificado: Tierra (dato real) sin penalización, Urano (dato real,
@@ -446,7 +456,42 @@ magnético estelar real.
 6. DETALLES DE IMPLEMENTACIÓN (antes solo en la Adenda, fusionados aquí)
 =============================================================================
 
-## 6.1 Q_efectivo diferenciado por tipo de sistema
+## 6.1 Migración orbital por marea estelar (REESCRITO en la auditoría oct-2026)
+
+**Antes:** da/dt = −a/τ_mig con τ_mig ∝ Q·(a/R_p)⁵/n (marea en el
+*planeta*, tabla de Q_efectivo de abajo) e integración de Euler. El
+resultado dependía del paso dt y 91 de los 300 planetas terminaban
+"estrellados", incluidos sistemas reales de varios Gyr.
+
+**Ahora** (`engine.py::_evolucion_orbital_marea_estelar`): la migración la
+produce la marea que el planeta levanta en la *estrella* (Goldreich & Soter
+1966; Jackson et al. 2009; Penev et al. 2018):
+
+  da/dt = −s · (9/2) · (M_p/M*) · (R*/a)⁵ · n · a / Q'*
+
+con s = +1 si la estrella gira más lento que la órbita (el planeta cae) y
+s = −1 si gira más rápido (se aleja). Como a^(13/2) evoluciona linealmente
+en el tiempo, se integra de forma **exacta**: el resultado no depende de dt.
+
+  - Q'* = 1×10⁷ por defecto (parámetro `Q_estrella`). Con 1×10⁶, K2-141 b y
+    TOI-2431 b caerían en menos de 10 Myr, incompatible con sistemas de
+    varios Gyr; con 1×10⁷ TOI-2431 b cae en ~10–30 Myr, del orden de lo
+    publicado para ese planeta.
+  - R* se estima por la masa (la base no guarda radios): R/R☉ = M^0.9 si
+    M < 1 M☉, M^0.57 si no (parámetro `R_estrella_m` para fijarlo).
+  - **Colapso (`se_estrello`)**: cuando a llega al mayor entre R* y el límite
+    de Roche fluido 2.44·R_p·(M*/M_p)^(1/3). Antes era un umbral fijo de
+    0.01 UA, que marcaba como estrellados desde t=0 a planetas reales como
+    GJ 367 b, K2-141 b, TOI-2431 b y Kepler-42 c.
+  - Rotación: si en un paso la marea estelar haría cruzar la sincronía
+    (ω_p − n cambia de signo), ω_p queda en n (bloqueo de marea). Antes
+    oscilaba alrededor de n y el período final dependía de dt (TRAPPIST-1 e
+    daba 14 d, 80 d o rotación retrógrada según el paso).
+
+La tabla siguiente queda como referencia histórica: `calcular_tiempo_migracion()`
+se conserva pero ya no se usa en el paso temporal.
+
+### Q_efectivo diferenciado por tipo de sistema (histórico, hasta v5.2.1)
 
 En `calcular_tiempo_migracion()`:
 
@@ -582,11 +627,17 @@ No se resuelve en v4.1; documentado para futura decisión de modelado.
   - N-body para 9 sistemas con resonancias seculares (incluye Mercurio).
   - ZHM (Zone Habitability Model): sin fórmula candidata exitosa, sigue con
     fallback B > 0.3 G.
-  - MHI nunca corrido sobre los 47 planetas completos (solo verificado en
-    fórmula).
-  - `spec.txt`, `README.txt`, `run_app.py` no revisados.
-  - `validacion.py` cubre solo 4 cuerpos del Sistema Solar; ningún
-    exoplaneta tiene validación cuantitativa contra datos observacionales.
+  - (Actualizado v5.2.1) La base de datos tiene hoy 300 planetas; el MHI
+    no se ha revisado sistemáticamente sobre todos ellos.
+  - `validacion.py` cubre 6 cuerpos del Sistema Solar (Tierra, Venus,
+    Marte, Júpiter, Urano, Neptuno) partiendo de sus valores ACTUALES: es
+    una prueba de consistencia, no una predicción independiente (ver
+    README). Ningún exoplaneta tiene validación cuantitativa contra datos
+    observacionales.
+  - El modelo no resuelve las ecuaciones de la magnetohidrodinámica
+    (inducción + fluido): el campo es un modelo parametrizado de
+    decaimiento con interruptor de dínamo (§4.4) o un balance térmico
+    de primer orden (§4.5).
 
 =============================================================================
 9. RESUMEN DEL MODELO ACOPLADO (v4.1)
@@ -599,7 +650,8 @@ paso temporal explícito. Orden de actualización por paso (ver
   1. Evolución estelar (NUEVO EN v4.1, antes ausente):
      w_estrella(t), B_estrella(t), rho_sw(t), v_sw(t) = EstrellaEvolutiva.evolucionar(t_gyr)
 
-  2. Migración orbital: da/dt = -a / tau_migracion
+  2. Migración orbital por marea estelar, integrada de forma exacta
+     (§6.1, auditoría oct-2026)
 
   3. Circularización orbital (Hut 1981):
      de/dt = -(21/2)·(k₂/Q)·(M_estrella/M_planeta)·(R_p/a)⁵·n·e

@@ -21,6 +21,14 @@ class SerieTemporal:
     e: List[float] = field(default_factory=list)
     Q_tidal_watts: List[float] = field(default_factory=list)
     a_luna_ua: List[float] = field(default_factory=list)
+    # NUEVO (multi-luna, viz 3D, ago-2026): serie temporal de TODAS las
+    # lunas, una entrada por paso de tiempo -- cada entrada es una lista
+    # con la distancia (UA) de cada luna en ese instante, mismo orden que
+    # self.lunas en engine.py. a_luna_ua (arriba) NO se toca: sigue
+    # siendo solo la primera luna, para no romper visualizacion_3d.py/
+    # exportar_video.py/exportar_csv.py tal como estaban. a_lunas_ua es
+    # lo que usa la visualización 3D nueva para dibujar TODAS las lunas.
+    a_lunas_ua: List[List[float]] = field(default_factory=list)
     # ========= NUEVOS CAMPOS v4.2 (nucleo termico) =========
     T_cmb_K: List[float] = field(default_factory=list)
     B_gen_gauss: List[float] = field(default_factory=list)
@@ -84,6 +92,14 @@ class ResultadoSimulacion:
     eps_conocido: bool = False
     serie: Optional[SerieTemporal] = None
     error: Optional[str] = None
+    # NUEVO (multi-luna, ago-2026): resumen por luna, una entrada por luna
+    # simulada -- {"nombre", "masa_kg", "a_inicial_ua", "a_final_ua",
+    # "recesion_cm_anio"}. a_luna_inicial_ua/a_luna_final_ua/
+    # recesion_lunar_cm_anio arriba se mantienen SIN CAMBIOS y siguen
+    # describiendo la primera luna (o la única, en el caso normal de un
+    # planeta con una luna) -- así ningún consumidor existente (CSV/JSON/
+    # UI) se rompe. `lunas` es la fuente completa cuando hay más de una.
+    lunas: List[Dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self):
         for campo in CAMPOS_ESCALARES_FLOAT:
