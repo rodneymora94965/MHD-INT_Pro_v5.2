@@ -163,9 +163,25 @@ def _a_ua(p):
 
 @pytest.mark.parametrize("nombre,a_ua", [
     ("GJ_1132b", 0.01570), ("LHS_475b", 0.0204), ("GJ_3293b", 0.14339),
-    ("HD_27894c", 0.198), ("HD_27894d", 5.448),
+    ("HD_27894c", 0.198), ("HD_27894d", 5.448), ("TRAPPIST_1e", 0.02925),
 ])
 def test_datos_corregidos(nombre, a_ua):
     if nombre not in PLANETAS:
         pytest.skip(f"{nombre} no esta en la base")
     assert _a_ua(PLANETAS[nombre]) == pytest.approx(a_ua, rel=0.01)
+
+
+def test_campo_mercurio_corregido():
+    # MESSENGER: dipolo de ~195 nT en el ecuador (Anderson et al. 2011)
+    assert PLANETAS["Mercurio"]["B_p_inicial"] == pytest.approx(1.95e-7, rel=0.1)
+
+
+def test_cadena_resonante_trappist1():
+    # Agol et al. 2021: 8:5, 5:3, 3:2, 3:2, 4:3, 3:2. Antes de corregir el
+    # semieje de TRAPPIST-1e, los pares d/e y e/f salian 7:5 y 8:5.
+    from database import ESTRELLAS
+    resonancias = pytest.importorskip("resonancias")  # no viene en la version libre
+    buscar_resonancias_sistema = resonancias.buscar_resonancias_sistema
+    r = buscar_resonancias_sistema("TRAPPIST_1", PLANETAS, ESTRELLAS, tolerancia=0.02)
+    obtenidas = [p.get("resonancia") for p in r["pares"]]
+    assert obtenidas == [(8, 5), (5, 3), (3, 2), (3, 2), (4, 3), (3, 2)]

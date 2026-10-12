@@ -179,7 +179,7 @@ MARCO_TEORICO = {
     ],
     "nota_penalizacion_oblicuidad": (
         "⚠️ Hay una quinta pieza, la penalización por oblicuidad extrema "
-        "(-20 puntos si ε > 60° o ε < 5°), pero **solo se aplica a 5 cuerpos "
+        "(-20 puntos si ε > 60°), pero **solo se aplica a 5 cuerpos "
         "con oblicuidad real medida**: Tierra, Marte, Júpiter, Urano y "
         "Venus. Para el resto de la base (casi todos los exoplanetas), la "
         "oblicuidad es un dato desconocido, no un dato bajo — penalizar "

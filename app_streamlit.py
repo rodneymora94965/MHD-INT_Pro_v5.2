@@ -21,7 +21,7 @@ from sesion import obtener_sesion_id
 from visualizacion_3d import render_orbita_3d
 from eventos_ui import render_eventos
 
-st.set_page_config(page_title="MHD-INT v5.2", layout="wide", page_icon="assets/logo_mhd_int.png")
+st.set_page_config(page_title="MHD-INT v5.2.2 (versión libre)", layout="wide", page_icon="assets/logo_mhd_int.png")
 
 # ===================================================================
 # Estilo Premium (CSS Injectado)
@@ -120,7 +120,7 @@ st.markdown("""
 # ACTUALIZACION (Roney, sep-2026): la version publica pasa a 5.2 para
 # alinearse con el paquete Pro v5.2. Mismo criterio: un unico numero.
 # ===================================================================
-VERSION_PUBLICA = "5.2"
+VERSION_PUBLICA = "5.2.2"
 
 col_logo, col_titulo = st.columns([1, 3])
 with col_logo:
@@ -136,13 +136,15 @@ with col_titulo:
 # ni cuenta tiempo ni usos. Para pasar a version completa, alcanza con
 # poner EDICION = "COMPLETA" (o borrar el bloque).
 # ===================================================================
-EDICION = "PRUEBA"  # cambiar a "COMPLETA" para quitar el banner
+# oct-2026: la edicion publica de GitHub es la "versión libre" (AGPL-3.0).
+EDICION = "LIBRE"
 
-if EDICION == "PRUEBA":
+if EDICION == "LIBRE":
     st.info(
-        "🧪 **Versión de prueba de MHD-INT.** Simulación científica sin límite de "
-        "tiempo ni de usos en esta edición. Para la versión completa, contactá a Roney.",
-        icon="🧪",
+        "**MHD-INT versión libre** (código abierto, AGPL-3.0): el mismo motor físico, con 47 planetas. "
+        "Las versiones STANDARD y PRO, con 300 planetas, laboratorios y exportaciones, están en "
+        "[solariscore.com.co](https://solariscore.com.co).",
+        icon="🔭",
     )
 # ===================================================================
 
@@ -330,7 +332,6 @@ elif modo == "Simulación":
                 name="Oblicuidad (°)", line=dict(color="orange", width=3),
             ))
             fig_eps.add_hline(y=60, line_dash="dash", line_color="red", annotation_text="Límite caótico (60°)")
-            fig_eps.add_hline(y=5, line_dash="dash", line_color="blue", annotation_text="Límite estéril (5°)")
             fig_eps.update_layout(
                 xaxis_title="Tiempo (Gyr)", yaxis_title="Oblicuidad (grados)",
                 legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5),
@@ -340,10 +341,8 @@ elif modo == "Simulación":
             eps_final_res = resultado.eps_final_deg
             if eps_final_res > 60:
                 st.warning(f"⚠️ Oblicuidad extrema ({eps_final_res:.1f}°). Clima caótico. Penalización de -20 en el MHI.")
-            elif eps_final_res < 5:
-                st.warning(f"⚠️ Oblicuidad muy baja ({eps_final_res:.1f}°). Riesgo de invernadero descontrolado. Penalización de -20 en el MHI.")
             else:
-                st.success(f"✅ Oblicuidad estable ({eps_final_res:.1f}°). Clima habitable.")
+                st.success(f"✅ Oblicuidad de {eps_final_res:.1f}° (por debajo del límite caótico de 60°).")
         # ==================================================================================
 
         # ---- Órbita en 3D ----
