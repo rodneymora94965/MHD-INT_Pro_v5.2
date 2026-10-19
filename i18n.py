@@ -66,9 +66,24 @@ def recargar():
 # ---------------------------------------------------------------------------
 # Idioma activo
 # ---------------------------------------------------------------------------
-def idioma_actual():
-    """Idioma de la sesión. Siempre devuelve uno válido."""
+def _idioma_de_url():
+    """Idioma pedido en la URL (?lang=en), o None si no hay uno válido."""
     try:
+        valor = st.query_params.get("lang")
+    except Exception:
+        return None
+    return valor if valor in IDIOMAS else None
+
+
+def idioma_actual():
+    """Idioma de la sesión. Siempre devuelve uno válido.
+
+    Al iniciar una sesión nueva (p. ej. tras F5) se toma de ?lang= en la URL;
+    sin parámetro se usa el idioma por defecto (español).
+    """
+    try:
+        if "lang" not in st.session_state:
+            st.session_state["lang"] = _idioma_de_url() or IDIOMA_POR_DEFECTO
         valor = st.session_state.get("lang", IDIOMA_POR_DEFECTO)
     except Exception:
         return IDIOMA_POR_DEFECTO
@@ -76,9 +91,14 @@ def idioma_actual():
 
 
 def fijar_idioma(idioma):
-    """Cambia el idioma de la sesión."""
+    """Cambia el idioma de la sesión y lo guarda en la URL (?lang=) para que
+    sobreviva a F5 y a los enlaces compartidos."""
     if idioma in IDIOMAS:
         st.session_state["lang"] = idioma
+        try:
+            st.query_params["lang"] = idioma
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
