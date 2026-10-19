@@ -123,3 +123,23 @@ def buscar_termino(clave: str):
         if clave in terminos:
             return terminos[clave]
     return None
+
+
+def obtener_glosario():
+    """GLOSARIO_TERMINOS en el idioma elegido en la app (es/en). Misma
+    estructura {sección: {clave: (título, definición)}}. Si no hay
+    traducción -- o la app no tiene i18n, como en la versión Open Source
+    todavía -- devuelve el texto en español de GLOSARIO_TERMINOS."""
+    try:
+        from i18n import t
+    except ImportError:
+        return GLOSARIO_TERMINOS
+    salida = {}
+    for i, (seccion, terminos) in enumerate(GLOSARIO_TERMINOS.items()):
+        nueva = {}
+        for clave, (titulo, definicion) in terminos.items():
+            k = clave.replace("/", "_").replace(" ", "_")
+            nueva[clave] = (t(f"glos.{k}.t", defecto=titulo),
+                            t(f"glos.{k}.d", defecto=definicion))
+        salida[t(f"glos.sec.{i}", defecto=seccion)] = nueva
+    return salida

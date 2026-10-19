@@ -1,0 +1,13 @@
+{
+  "fotos.titulo": "### 🌌 Astronomical Photo Library",
+  "fotos.caption": "A curated gallery, not the picture of the day through a live API -- the photos are real (NASA/ESA/Wikimedia Commons, with the source given on each one) and depend neither on a key nor on an external service being up today. Each one connects to a real topic in 📚 Education.",
+  "fotos.filtro": "Filter by category",
+  "fotos.filtro.todas": "All",
+  "fotos.ver_descripcion": "View description",
+  "fotos.fuente": "Source: {fuente}",
+  "fotos.conecta": "📚 Connects to: **{titulo}** — \"{tema}\"",
+  "fotos.seccion.introduccion_astrofisica": "Introduction to Astrophysics",
+  "fotos.seccion.pilares": "Theoretical Framework — Pillars",
+  "fotos.seccion.temas_avanzados": "Theoretical Framework — Advanced topics",
+  "fotos.seccion.interpretacion_gravedad_magnetismo": "Gravitational and magnetic interpretation"
+}

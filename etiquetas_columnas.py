@@ -11,7 +11,17 @@
 # nunca al guardar.
 # ===================================================================
 
-ETIQUETAS_HISTORIAL = {
+
+class _Etiquetas(dict):
+    """Diccionario de etiquetas (clave interna -> texto en español) con un
+    identificador para buscar su traducción en locales/<idioma>/etiquetas_columnas.json.
+    Sigue siendo un dict normal: el español es el valor por defecto."""
+    def __init__(self, ident, datos):
+        super().__init__(datos)
+        self.ident = ident
+
+
+ETIQUETAS_HISTORIAL = _Etiquetas("hist", {
     "timestamp": "Fecha y hora",
     "planeta": "Planeta",
     "t_max_gyr": "Tiempo simulado (Gyr)",
@@ -24,18 +34,18 @@ ETIQUETAS_HISTORIAL = {
     "se_estrello": "Se estrelló contra la estrella",
     "T_cmb_final_K": "Temp. núcleo-manto final (K)",
     "Rm_final": "Reynolds magnético final (Rm)",
-}
+})
 
-ETIQUETAS_MAPA_MHI = {
+ETIQUETAS_MAPA_MHI = _Etiquetas("mapa", {
     "a_ua": "Distancia orbital (UA)",
     "B_G": "Campo magnético inicial (G)",
     "MHI_total": "Índice de habitabilidad magnética (MHI)",
     "se_estrello": "Se estrelló contra la estrella",
     "campo_protegido": "Campo magnético protector",
-}
+})
 
 # Usadas por exportar_csv.py (serie_a_dataframe / resumen_a_dataframe).
-ETIQUETAS_SERIE_TEMPORAL = {
+ETIQUETAS_SERIE_TEMPORAL = _Etiquetas("serie", {
     "planeta": "Planeta",
     "tiempos": "Tiempo (Gyr)",
     "a_ua": "Distancia orbital (UA)",
@@ -55,9 +65,9 @@ ETIQUETAS_SERIE_TEMPORAL = {
     "M_atm_kg": "Masa de atmósfera (kg)",
     "atm_perdida": "Atmósfera perdida",
     "eps_deg": "Oblicuidad (°)",
-}
+})
 
-ETIQUETAS_RESUMEN_SIMULACION = {
+ETIQUETAS_RESUMEN_SIMULACION = _Etiquetas("res", {
     "planeta": "Planeta",
     "nombre_planeta": "Nombre interno",
     "a_inicial_ua": "Distancia inicial (UA)",
@@ -89,12 +99,23 @@ ETIQUETAS_RESUMEN_SIMULACION = {
     "eps_final_deg": "Oblicuidad final (°)",
     "eps_conocido": "Oblicuidad con respaldo observacional",
     "error": "Error",
-}
+})
 
 
 def con_nombres_legibles(df, mapeo: dict):
     """Devuelve una COPIA del DataFrame con las columnas conocidas
     renombradas para mostrar/exportar. Las columnas que no estén en
     el mapeo se dejan tal cual (para no ocultar datos nuevos que
-    todavía no se agregaron al diccionario)."""
+    todavía no se agregaron al diccionario).
+
+    Si el mapeo es uno de los _Etiquetas de este módulo y la app tiene
+    i18n, los nombres salen en el idioma elegido (con el español como
+    respaldo)."""
+    ident = getattr(mapeo, "ident", None)
+    if ident:
+        try:
+            from i18n import t
+            mapeo = {k: t(f"col.{ident}.{k}", defecto=v) for k, v in mapeo.items()}
+        except ImportError:
+            pass
     return df.rename(columns=mapeo)

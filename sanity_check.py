@@ -18,6 +18,8 @@ DENSIDAD_MIN_G_CM3 = 0.05
 DENSIDAD_MAX_G_CM3 = 25.0
 KEPLER_TOLERANCIA = 0.30  # 30% de margen -- es un chequeo grueso, no una validación orbital fina
 
+from contenido_i18n import tm
+
 UA_M = 1.495978707e11
 MSUN_KG = 1.98847e30
 M_TIERRA_KG = 5.972e24
@@ -66,24 +68,21 @@ def validar_coherencia(datos_planeta: dict, masa_estrella_kg: float = None) -> d
 
     # ---- Bloqueo real: valores imposibles, no raros ----
     if M is None or M <= 0:
-        return {"coherente": False, "advertencias": ["Masa (M) ausente, negativa o cero -- dato inválido."]}
+        return {"coherente": False, "advertencias": [tm("motor.sanity.masa")]}
     if R_p is None or R_p <= 0:
-        return {"coherente": False, "advertencias": ["Radio (R_p) ausente, negativo o cero -- dato inválido."]}
+        return {"coherente": False, "advertencias": [tm("motor.sanity.radio")]}
     if a_inicial is not None and a_inicial <= 0:
-        return {"coherente": False, "advertencias": ["Semieje (a_inicial) negativo o cero -- dato inválido."]}
+        return {"coherente": False, "advertencias": [tm("motor.sanity.semieje")]}
 
     # ---- Advertencias: raro pero puede ser real, no bloquea ----
     densidad = _densidad_g_cm3(M, R_p)
     if densidad < DENSIDAD_MIN_G_CM3:
         advertencias.append(
-            f"Densidad muy baja ({densidad:.3f} g/cm³, mínimo esperado "
-            f"{DENSIDAD_MIN_G_CM3} g/cm³) -- revisar unidades de M/R_p. "
-            f"Puede ser real: Kepler-51b/c/d miden ~0.1 g/cm³."
+            tm("motor.sanity.dens_baja", dens=f"{densidad:.3f}", minimo=DENSIDAD_MIN_G_CM3)
         )
     elif densidad > DENSIDAD_MAX_G_CM3:
         advertencias.append(
-            f"Densidad muy alta ({densidad:.3f} g/cm³, máximo esperado "
-            f"{DENSIDAD_MAX_G_CM3} g/cm³) -- revisar unidades de M/R_p."
+            tm("motor.sanity.dens_alta", dens=f"{densidad:.3f}", maximo=DENSIDAD_MAX_G_CM3)
         )
 
     if masa_estrella_kg and a_inicial and datos_planeta.get("periodo_dias"):
@@ -93,11 +92,9 @@ def validar_coherencia(datos_planeta: dict, masa_estrella_kg: float = None) -> d
             error_rel = abs(periodo_real_anios - periodo_esperado_anios) / periodo_esperado_anios
             if error_rel > KEPLER_TOLERANCIA:
                 advertencias.append(
-                    f"Período reportado ({periodo_real_anios:.3f} años) se aleja "
-                    f"{error_rel * 100:.0f}% del esperado por la 3ª ley de Kepler "
-                    f"({periodo_esperado_anios:.3f} años) para a={a_inicial / UA_M:.4f} UA "
-                    f"y M_estrella={masa_estrella_kg / MSUN_KG:.3f} M☉ -- revisar semieje, "
-                    f"período o masa estelar."
+                    tm("motor.sanity.kepler", p_real=f"{periodo_real_anios:.3f}",
+                       err=f"{error_rel * 100:.0f}", p_esp=f"{periodo_esperado_anios:.3f}",
+                       a=f"{a_inicial / UA_M:.4f}", m=f"{masa_estrella_kg / MSUN_KG:.3f}")
                 )
 
     return {"coherente": True, "advertencias": advertencias}

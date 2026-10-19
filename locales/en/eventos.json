@@ -1,0 +1,17 @@
+{
+  "ev.titulo": "### 🎬 Capturable moments in this run",
+  "ev.caption": "Instead of watching billions of years in full, pick a moment where something happened and zoom into that window. These events use the same thresholds that define the MHI (e.g. a field below 0.3 G stops counting as \"active\" for habitability) — it is the same yardstick the rest of the app already uses, not a new one. For more extreme thresholds meant for audiovisual content (e.g. a field close to zero), see 🎬 Content Workshop below.",
+  "ev.ninguno": "No capturable event was detected in this run (no shield/atmosphere loss, no dynamo changes, no circularization, no collision). This is a real result: it means that, with these parameters, the planet stayed stable throughout the simulated time.",
+  "ev.selector": "Events detected in this run",
+  "ev.ventana": "Window around the event (± million years)",
+  "ev.mostrando": "Showing {n} computed points between {t0} and {t1} Gyr. The resolution is that of the original run (it is not re-simulated in more detail) — if you need finer resolution in this window, run the simulation again limiting the maximum time to near this event.",
+  "ev.sin_variable": "This run did not save the variable needed to plot this event.",
+  "ev.grafico.evento": "event",
+  "ev.grafico.eje_x": "Time (Gyr)",
+  "ev.var.R_m_norm": "R_m (planetary radii)",
+  "ev.var.B_p_gauss": "Magnetic field (G)",
+  "ev.var.M_atm_kg": "Atmospheric mass (kg)",
+  "ev.var.Rm_num": "Magnetic Reynolds number (Rm)",
+  "ev.var.Q_tidal_watts": "Tidal heating (W)",
+  "ev.var.eps_deg": "Obliquity (°)"
+}

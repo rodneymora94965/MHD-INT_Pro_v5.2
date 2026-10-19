@@ -1,0 +1,13 @@
+{
+  "fotos.titulo": "### 🌌 Biblioteca de Fotos Astronómicas",
+  "fotos.caption": "Galería curada, no la imagen del día vía API en vivo -- las fotos son reales (NASA/ESA/Wikimedia Commons, fuente indicada en cada una) y no dependen de una clave ni de que un servicio externo esté arriba hoy. Cada una conecta con un tema real de 📚 Educación.",
+  "fotos.filtro": "Filtrar por categoría",
+  "fotos.filtro.todas": "Todas",
+  "fotos.ver_descripcion": "Ver descripción",
+  "fotos.fuente": "Fuente: {fuente}",
+  "fotos.conecta": "📚 Conecta con: **{titulo}** — \"{tema}\"",
+  "fotos.seccion.introduccion_astrofisica": "Introducción a la Astrofísica",
+  "fotos.seccion.pilares": "Marco Teórico — Pilares",
+  "fotos.seccion.temas_avanzados": "Marco Teórico — Temas avanzados",
+  "fotos.seccion.interpretacion_gravedad_magnetismo": "Interpretación gravitatoria y magnética"
+}

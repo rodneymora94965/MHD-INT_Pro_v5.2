@@ -1,0 +1,11 @@
+{
+  "v3d.pocos": "No hay suficientes puntos en la serie para animar la órbita.",
+  "v3d.orbita": "Órbita",
+  "v3d.estrella": "Estrella",
+  "v3d.ua": "UA",
+  "v3d.play": "▶️ Reproducir",
+  "v3d.pausa": "⏸️ Pausar",
+  "v3d.t_sufijo": " Gyr",
+  "v3d.caption": "La **forma y el tamaño de la órbita** en cada cuadro son el resultado real simulado (migración orbital, circularización por marea). El **movimiento del planeta girando** es ilustrativo, para dar sensación de órbita — el motor no integra la posición orbital rápida (horas/días), solo la evolución lenta de sus parámetros a escala de miles de millones de años.",
+  "v3d.caption.lunas": " La(s) distancia(s) de la(s) luna(s) están reescaladas para que se vean (no a escala real), y giran a velocidades solo ilustrativas -- no reflejan sus velocidades orbitales reales entre sí."
+}

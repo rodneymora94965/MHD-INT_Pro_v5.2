@@ -1,0 +1,18 @@
+{
+  "mapa.titulo": "🗺️ Mapa de calor MHI: distancia orbital × campo inicial",
+  "mapa.planeta": "Planeta base",
+  "mapa.rango_a": "Rango de distancia orbital (UA)",
+  "mapa.rango_b": "Rango de campo inicial (Gauss)",
+  "mapa.resolucion": "Resolución de la malla (N×N)",
+  "mapa.t_max": "Tiempo de simulación (Gyr)",
+  "mapa.boton": "🔥 Generar mapa",
+  "mapa.simulando_pct": "Simulando... {pct}%",
+  "mapa.generando": "Generando mapa MHI...",
+  "mapa.fig.titulo": "MHI de {planeta} — variando a y B_p inicial",
+  "mapa.fig.y": "Campo magnético inicial (Gauss)",
+  "mapa.min": "MHI mínimo",
+  "mapa.max": "MHI máximo",
+  "mapa.prom": "MHI promedio",
+  "mapa.crudos": "Ver datos crudos",
+  "mapa.csv": "Descargar CSV"
+}

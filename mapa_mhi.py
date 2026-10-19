@@ -23,6 +23,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from engine import simular_planeta, UA
 from database import PLANETAS
 from habitabilidad import calcular_mhi
+from contenido_i18n import tm  # mensajes del motor ES/EN (sin streamlit usa español)
 from progreso_util import invocar_callback  # Sugerencia 4: logs en vivo (fracción 0-1 + mensaje opcional)
 
 
@@ -125,7 +126,7 @@ def generar_mapa_mhi(planeta_base: str,
                 a_ua, B_G = args[1], args[2]
                 invocar_callback(
                     progress_callback, i / total,
-                    f"Calculando MHI del punto {i}/{total} (a={a_ua:.3f} UA, B={B_G:.3f} G)...",
+                    tm("motor.mapa.progreso", i=i, total=total, a=a_ua, B=B_G),
                 )
         return pd.DataFrame(resultados)
 
@@ -142,7 +143,7 @@ def generar_mapa_mhi(planeta_base: str,
                 a_ua, B_G = puntos[idx][1], puntos[idx][2]
                 invocar_callback(
                     progress_callback, contador / total,
-                    f"Calculando MHI del punto {contador}/{total} (a={a_ua:.3f} UA, B={B_G:.3f} G)...",
+                    tm("motor.mapa.progreso", i=contador, total=total, a=a_ua, B=B_G),
                 )
 
     return pd.DataFrame(resultados)

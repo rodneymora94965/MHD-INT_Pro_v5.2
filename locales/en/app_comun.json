@@ -1,0 +1,18 @@
+{
+  "i18n.idioma": "Language",
+  "sidebar.modo": "Mode",
+  "historial.btn": "📂 View simulation history",
+  "historial.titulo": "📜 Simulation history",
+  "historial.caption": "Only simulations from your current session are shown.",
+  "historial.vacio": "No simulations have been saved in this session yet.",
+  "historial.descargar": "⬇️ Download my history (CSV)",
+  "historial.borrar": "🗑️ Delete my history",
+  "historial.confirmar": "Delete your session history? This action cannot be undone.",
+  "historial.si": "Yes, delete mine",
+  "historial.cancelar": "Cancel",
+  "historial.borrado": "Your history has been deleted.",
+  "bienvenida.texto": "👋 First time here? With so many tabs it can be hard to know where to start — try the 🗺️ Learning Path, it walks you through step by step.",
+  "bienvenida.cerrar": "Close",
+  "glosario.titulo": "Glossary of terms",
+  "glosario.caption": "What each variable and acronym shown in MHD-INT's charts, reports and validations means."
+}

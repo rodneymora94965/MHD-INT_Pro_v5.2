@@ -1,0 +1,12 @@
+{
+  "sim.planeta": "Planet",
+  "sim.t_max": "Maximum time (Gyr)",
+  "sim.dt": "Step (years)",
+  "sim.torques": "⚙️ Torque control (experiments)",
+  "sim.torque_mag": "Magnetic torque",
+  "sim.torque_estelar": "Stellar tide",
+  "sim.torque_lunar": "Lunar tide",
+  "sim.dinamo": "🧠 Dynamo and atmosphere model",
+  "sim.atmosfera": "Enable atmospheric loss (XUV escape)",
+  "sim.boton": "Simulate"
+}

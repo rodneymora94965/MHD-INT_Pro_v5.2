@@ -1,0 +1,18 @@
+{
+  "mapa.titulo": "🗺️ MHI heat map: orbital distance × initial field",
+  "mapa.planeta": "Base planet",
+  "mapa.rango_a": "Orbital distance range (AU)",
+  "mapa.rango_b": "Initial field range (Gauss)",
+  "mapa.resolucion": "Grid resolution (N×N)",
+  "mapa.t_max": "Simulation time (Gyr)",
+  "mapa.boton": "🔥 Generate map",
+  "mapa.simulando_pct": "Simulating... {pct}%",
+  "mapa.generando": "Generating MHI map...",
+  "mapa.fig.titulo": "MHI of {planeta} — varying a and initial B_p",
+  "mapa.fig.y": "Initial magnetic field (Gauss)",
+  "mapa.min": "Minimum MHI",
+  "mapa.max": "Maximum MHI",
+  "mapa.prom": "Average MHI",
+  "mapa.crudos": "View raw data",
+  "mapa.csv": "Download CSV"
+}

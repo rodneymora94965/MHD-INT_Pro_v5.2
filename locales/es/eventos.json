@@ -1,0 +1,17 @@
+{
+  "ev.titulo": "### 🎬 Momentos capturables de esta corrida",
+  "ev.caption": "En vez de ver los miles de millones de años completos, elegí un momento donde pasó algo y hacé zoom a esa ventana. Estos eventos usan los mismos umbrales que definen el MHI (ej. campo por debajo de 0.3 G = deja de contar como \"activo\" para habitabilidad) — es la misma vara que ya usa el resto de la app, no una nueva. Para umbrales más extremos pensados para contenido audiovisual (ej. campo casi en cero), ver 🎬 Taller de Contenido más abajo.",
+  "ev.ninguno": "No se detectó ningún evento capturable en esta corrida (ni pérdida de escudo/atmósfera, ni cambios de dínamo, ni circularización, ni colisión). Es un resultado real: significa que, con estos parámetros, el planeta se mantuvo estable durante todo el tiempo simulado.",
+  "ev.selector": "Eventos detectados en esta corrida",
+  "ev.ventana": "Ventana alrededor del evento (± millones de años)",
+  "ev.mostrando": "Mostrando {n} puntos calculados entre {t0} y {t1} Gyr. La resolución es la de la corrida original (no se vuelve a simular con más detalle) — si necesitás más finura en esta ventana, corré de nuevo la simulación acotando el tiempo máximo cerca de este evento.",
+  "ev.sin_variable": "Esta corrida no guardó la variable necesaria para graficar este evento.",
+  "ev.grafico.evento": "evento",
+  "ev.grafico.eje_x": "Tiempo (Gyr)",
+  "ev.var.R_m_norm": "R_m (radios planetarios)",
+  "ev.var.B_p_gauss": "Campo magnético (G)",
+  "ev.var.M_atm_kg": "Masa atmosférica (kg)",
+  "ev.var.Rm_num": "Número de Reynolds magnético (Rm)",
+  "ev.var.Q_tidal_watts": "Calor de marea (W)",
+  "ev.var.eps_deg": "Oblicuidad (°)"
+}

@@ -1,0 +1,11 @@
+{
+  "sint.titulo": "🧬 Design your own planet",
+  "sint.masa": "Mass (Earth masses)",
+  "sint.radio": "Radius (Earth radii)",
+  "sint.tipo_planeta": "Planet type",
+  "sint.tipo_estrella": "Star spectral type",
+  "sint.edad": "Star age (Gyr)",
+  "sint.eps": "Initial obliquity (degrees)",
+  "sint.torques.titulo": "⚙️ Torque control (optional)",
+  "sint.simular": "🚀 Simulate synthetic planet"
+}

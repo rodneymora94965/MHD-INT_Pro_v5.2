@@ -31,7 +31,10 @@ def _cruces(valores, umbral, hacia_abajo=True):
 
 def detectar_eventos(resultado) -> list:
     """Devuelve una lista de eventos capturables, cada uno con:
-    tipo, titulo, t_gyr, indice, descripcion, ventana_sugerida_myr.
+    tipo, titulo, t_gyr, indice, descripcion, ventana_sugerida_myr, y (i18n)
+    args: valores ya formateados para traducir el texto (la interfaz busca
+    "evd.<tipo>.titulo" / "evd.<tipo>.desc" en locales/ y, si no existen,
+    usa titulo/descripcion en español tal cual).
     Vacía si la simulación no tiene serie o no cruzó ningún umbral."""
     if not resultado.tiene_serie():
         return []
@@ -46,6 +49,7 @@ def detectar_eventos(resultado) -> list:
             descripcion=(f"La magnetopausa cae por debajo de {UMBRAL_R_MP_PROTEGIDO:.0f} "
                          f"radios planetarios — deja de proteger significativamente."),
             ventana_sugerida_myr=200,
+            args=dict(umbral=f"{UMBRAL_R_MP_PROTEGIDO:.0f}"),
         ))
 
     # 2) Campo por debajo del umbral de "campo activo" (0.3 G)
@@ -55,6 +59,7 @@ def detectar_eventos(resultado) -> list:
             t_gyr=serie.tiempos[i], indice=i,
             descripcion=f"B cae por debajo de {UMBRAL_B_CAMPO_ACTIVO_GAUSS} G.",
             ventana_sugerida_myr=200,
+            args=dict(umbral=f"{UMBRAL_B_CAMPO_ACTIVO_GAUSS}"),
         ))
 
     # 3) Atmósfera: cae a menos del 5% de la masa atmosférica inicial
@@ -66,6 +71,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i], indice=i,
                 descripcion=f"La masa atmosférica cae por debajo del {UMBRAL_ATM_PERDIDA_FRACCION*100:.0f}% de su valor inicial.",
                 ventana_sugerida_myr=300,
+                args=dict(pct=f"{UMBRAL_ATM_PERDIDA_FRACCION*100:.0f}"),
             ))
 
     # 4) Dínamo: Rm cruza 40 (activo <-> inactivo), en cualquier dirección
@@ -76,6 +82,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i], indice=i,
                 descripcion=f"Rm cae por debajo de {UMBRAL_RM_DINAMO:.0f} — el núcleo deja de generar campo activamente.",
                 ventana_sugerida_myr=200,
+                args=dict(umbral=f"{UMBRAL_RM_DINAMO:.0f}"),
             ))
         for i in _cruces(serie.Rm_num, UMBRAL_RM_DINAMO, hacia_abajo=False):
             eventos.append(dict(
@@ -83,6 +90,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i], indice=i,
                 descripcion=f"Rm supera {UMBRAL_RM_DINAMO:.0f} — el núcleo empieza a generar campo activamente.",
                 ventana_sugerida_myr=200,
+                args=dict(umbral=f"{UMBRAL_RM_DINAMO:.0f}"),
             ))
 
     # 5) Circularización: e cae a menos de 1/3 de su valor inicial (y < 0.01)
@@ -97,6 +105,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i], indice=i,
                 descripcion=f"La excentricidad cae de {e0:.3f} a menos de {umbral_e:.4f} por fricción de marea.",
                 ventana_sugerida_myr=500,
+                args=dict(e0=f"{e0:.3f}", umbral=f"{umbral_e:.4f}"),
             ))
 
     # 6) Pico de calor de marea
@@ -108,6 +117,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i_pico], indice=i_pico,
                 descripcion=f"Máxima disipación de marea: {serie.Q_tidal_watts[i_pico]:.2e} W (tipo Ío).",
                 ventana_sugerida_myr=100,
+                args=dict(q=f"{serie.Q_tidal_watts[i_pico]:.2e}"),
             ))
 
     # 7) Luna: se estrella (a_luna -> 0) o escapa (crece mucho)
@@ -137,6 +147,7 @@ def detectar_eventos(resultado) -> list:
                 t_gyr=serie.tiempos[i], indice=i,
                 descripcion=f"La oblicuidad supera {UMBRAL_OBL_CAOTICA_ALTA:.0f}°.",
                 ventana_sugerida_myr=500,
+                args=dict(umbral=f"{UMBRAL_OBL_CAOTICA_ALTA:.0f}"),
             ))
 
     # 9) Colisión con la estrella (fin de la simulación con se_estrello)

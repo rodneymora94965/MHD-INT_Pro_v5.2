@@ -20,6 +20,9 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
+from i18n import t
+from contenido_i18n import nombre_cuerpo
+
 COLOR_ESTRELLA = "#FFD54A"
 COLOR_ORBITA = "#2E5C8A"
 COLOR_PLANETA = "#4F9C6D"
@@ -51,7 +54,7 @@ def render_orbita_3d(resultado, nombre_planeta: str, indices=None):
     serie = resultado.serie
     n_puntos = len(serie.tiempos)
     if n_puntos < 2:
-        st.info("No hay suficientes puntos en la serie para animar la órbita.")
+        st.info(t("v3d.pocos"))
         return
 
     if indices is not None:
@@ -97,11 +100,11 @@ def render_orbita_3d(resultado, nombre_planeta: str, indices=None):
 
         datos_frame = [
             go.Scatter3d(x=x_orb, y=y_orb, z=np.zeros_like(x_orb),
-                          mode="lines", line=dict(color=COLOR_ORBITA, width=3), name="Órbita"),
+                          mode="lines", line=dict(color=COLOR_ORBITA, width=3), name=t("v3d.orbita")),
             go.Scatter3d(x=[0], y=[0], z=[0], mode="markers",
-                         marker=dict(size=14, color=COLOR_ESTRELLA), name="Estrella"),
+                         marker=dict(size=14, color=COLOR_ESTRELLA), name=t("v3d.estrella")),
             go.Scatter3d(x=[x_p], y=[y_p], z=[0], mode="markers",
-                         marker=dict(size=8, color=COLOR_PLANETA), name=nombre_planeta),
+                         marker=dict(size=8, color=COLOR_PLANETA), name=nombre_cuerpo(nombre_planeta)),
         ]
         if tiene_luna and i < len(lunas_serie):
             # Cada luna gira a una velocidad angular DISTINTA (múltiplo
@@ -128,8 +131,8 @@ def render_orbita_3d(resultado, nombre_planeta: str, indices=None):
     lim = max(serie.a_ua[i] * 1.3 for i in idxs)
     fig.update_layout(
         scene=dict(
-            xaxis=dict(title="UA", range=[-lim, lim], backgroundcolor="rgba(0,0,0,0)"),
-            yaxis=dict(title="UA", range=[-lim, lim], backgroundcolor="rgba(0,0,0,0)"),
+            xaxis=dict(title=t("v3d.ua"), range=[-lim, lim], backgroundcolor="rgba(0,0,0,0)"),
+            yaxis=dict(title=t("v3d.ua"), range=[-lim, lim], backgroundcolor="rgba(0,0,0,0)"),
             zaxis=dict(title="", range=[-lim, lim], showticklabels=False, backgroundcolor="rgba(0,0,0,0)"),
             aspectmode="cube",
         ),
@@ -140,9 +143,9 @@ def render_orbita_3d(resultado, nombre_planeta: str, indices=None):
         updatemenus=[dict(
             type="buttons", showactive=False,
             buttons=[
-                dict(label="▶️ Reproducir", method="animate",
+                dict(label=t("v3d.play"), method="animate",
                      args=[None, dict(frame=dict(duration=120, redraw=True), fromcurrent=True)]),
-                dict(label="⏸️ Pausar", method="animate",
+                dict(label=t("v3d.pausa"), method="animate",
                      args=[[None], dict(frame=dict(duration=0, redraw=False), mode="immediate")]),
             ],
         )],
@@ -150,18 +153,9 @@ def render_orbita_3d(resultado, nombre_planeta: str, indices=None):
             steps=[dict(method="animate", args=[[str(k)], dict(mode="immediate",
                         frame=dict(duration=0, redraw=True))], label=f"{serie.tiempos[idxs[k]]:.2f}")
                    for k in range(len(idxs))],
-            currentvalue=dict(prefix="t = ", suffix=" Gyr"),
+            currentvalue=dict(prefix="t = ", suffix=t("v3d.t_sufijo")),
         )],
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    st.caption(
-        "La **forma y el tamaño de la órbita** en cada cuadro son el resultado real "
-        "simulado (migración orbital, circularización por marea). El **movimiento del "
-        "planeta girando** es ilustrativo, para dar sensación de órbita — el motor no "
-        "integra la posición orbital rápida (horas/días), solo la evolución lenta de "
-        "sus parámetros a escala de miles de millones de años."
-        + (" La(s) distancia(s) de la(s) luna(s) están reescaladas para que se vean "
-           "(no a escala real), y giran a velocidades solo ilustrativas -- no reflejan "
-           "sus velocidades orbitales reales entre sí." if tiene_luna else "")
-    )
+    st.caption(t("v3d.caption") + (t("v3d.caption.lunas") if tiene_luna else ""))

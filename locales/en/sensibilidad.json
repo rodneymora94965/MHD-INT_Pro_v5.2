@@ -1,0 +1,16 @@
+{
+  "sens.tipo": "Analysis type",
+  "sens.tipo.basica": "Basic (k2_sobre_q + densidad_nucleo)",
+  "sens.tipo.extendida": "Extended (1 parameter of your choice)",
+  "sens.n_corridas": "Number of runs",
+  "sens.boton": "Run sensitivity",
+  "sens.boton_ext": "Run extended sensitivity",
+  "sens.param": "Parameter to vary",
+  "sens.unidad": "Unit: {unidad}",
+  "sens.u.gauss": "Gauss",
+  "sens.u.si": "SI (same units as database.py)",
+  "sens.vmin": "Minimum value",
+  "sens.vmax": "Maximum value",
+  "sens.n_puntos": "Number of points",
+  "sens.fig.titulo": "Sensitivity of B_final to {param}"
+}

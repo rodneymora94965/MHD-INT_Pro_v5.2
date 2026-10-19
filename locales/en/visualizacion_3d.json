@@ -1,0 +1,11 @@
+{
+  "v3d.pocos": "There are not enough points in the series to animate the orbit.",
+  "v3d.orbita": "Orbit",
+  "v3d.estrella": "Star",
+  "v3d.ua": "AU",
+  "v3d.play": "▶️ Play",
+  "v3d.pausa": "⏸️ Pause",
+  "v3d.t_sufijo": " Gyr",
+  "v3d.caption": "The **shape and size of the orbit** in each frame are the real simulated result (orbital migration, tidal circularization). The **planet's spinning motion** is illustrative, to give a sense of orbit — the engine does not integrate the fast orbital position (hours/days), only the slow evolution of its parameters on a scale of billions of years.",
+  "v3d.caption.lunas": " The moon distance(s) are rescaled so they are visible (not to real scale), and they rotate at illustrative speeds only -- they do not reflect their real orbital speeds relative to each other."
+}

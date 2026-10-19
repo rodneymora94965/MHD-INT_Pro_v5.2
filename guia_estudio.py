@@ -11,6 +11,8 @@
 import io
 from datetime import datetime
 
+from contenido_i18n import tm, traducir as T
+
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -38,10 +40,10 @@ _EJERCICIOS_AUTOEVALUACION = {
 
 def _campos_ejercicio(nivel):
     if nivel == "Secundaria":
-        return [("Objetivo", "objetivo"), ("Experimento", "experimento"), ("Predicción", "prediccion")]
+        return [(tm("guia.c.objetivo"), "objetivo"), (tm("guia.c.experimento"), "experimento"), (tm("guia.c.prediccion"), "prediccion")]
     if nivel == "Universidad":
-        return [("Concepto", "concepto"), ("Práctica", "practica"), ("Simulación", "simulacion")]
-    return [("Pregunta", "pregunta"), ("Método", "metodo"), ("Análisis", "analisis")]
+        return [(tm("guia.c.concepto"), "concepto"), (tm("guia.c.practica"), "practica"), (tm("guia.c.simulacion"), "simulacion")]
+    return [(tm("guia.c.pregunta"), "pregunta"), (tm("guia.c.metodo"), "metodo"), (tm("guia.c.analisis"), "analisis")]
 
 
 def generar_guia_estudio_pdf(marco_teorico: dict, ejercicios_por_nivel: dict,
@@ -54,7 +56,7 @@ def generar_guia_estudio_pdf(marco_teorico: dict, ejercicios_por_nivel: dict,
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
-                            title="Guía de Estudio — MHD-INT",
+                            title=tm("guia.doc_title"),
                             author=(branding or {}).get("nombre_cliente", "Solaris Core"))
 
     styles = getSampleStyleSheet()
@@ -72,95 +74,91 @@ def generar_guia_estudio_pdf(marco_teorico: dict, ejercicios_por_nivel: dict,
     story = []
 
     # ---- Portada ----
-    story.append(Paragraph("Guía de Estudio", titulo_style))
-    story.append(Paragraph("MHD-INT — Simulador de Habitabilidad Magnética", normal_style))
+    story.append(Paragraph(tm("guia.titulo"), titulo_style))
+    story.append(Paragraph(tm("guia.subtitulo"), normal_style))
     story.append(Paragraph(f"Solaris Core · {datetime.now().strftime('%Y-%m-%d')}", nota_style))
     story.append(HRFlowable(width="100%", thickness=1, color=COLOR_ROJO, spaceAfter=10))
     story.append(Paragraph(
-        "Este documento organiza el contenido educativo real de MHD-INT en 5 "
-        "módulos progresivos. Cada sección tiene su equivalente exacto dentro "
-        "de la app, en 📚 Educación -- esta guía es un mapa de lectura, no un "
-        "documento aparte.", normal_style))
+        tm("guia.intro"), normal_style))
     story.append(PageBreak())
 
     # ---- Módulo 1: Fundamentos de astrofísica planetaria ----
-    story.append(Paragraph("Módulo 1 — Fundamentos de astrofísica planetaria", modulo_style))
+    story.append(Paragraph(tm("guia.m1"), modulo_style))
     for tema in marco_teorico["introduccion_astrofisica"]:
-        story.append(Paragraph(tema["titulo"], seccion_style))
-        story.append(Paragraph(tema["texto"], normal_style))
+        story.append(Paragraph(T(tema["titulo"]), seccion_style))
+        story.append(Paragraph(T(tema["texto"]), normal_style))
         story.append(Spacer(1, 4))
 
     # ---- Módulo 2: El motor MHD y sus componentes ----
     story.append(PageBreak())
-    story.append(Paragraph("Módulo 2 — El motor MHD y sus componentes", modulo_style))
+    story.append(Paragraph(tm("guia.m2"), modulo_style))
     for pilar in marco_teorico["pilares"]:
-        story.append(Paragraph(pilar["nombre"], seccion_style))
-        story.append(Paragraph(f"<b>Nivel básico:</b> {pilar['basico']}", normal_style))
-        story.append(Paragraph(f"<b>Nivel avanzado:</b> {pilar['avanzado']}", normal_style))
+        story.append(Paragraph(T(pilar["nombre"]), seccion_style))
+        story.append(Paragraph(tm("guia.nivel_basico", x=T(pilar['basico'])), normal_style))
+        story.append(Paragraph(tm("guia.nivel_avanzado", x=T(pilar['avanzado'])), normal_style))
         story.append(Spacer(1, 4))
 
-    story.append(Paragraph("El bucle del motor", seccion_style))
+    story.append(Paragraph(tm("guia.bucle"), seccion_style))
     _bucle = marco_teorico["bucle_motor"]
-    story.append(Paragraph(_bucle["intro"], normal_style))
+    story.append(Paragraph(T(_bucle["intro"]), normal_style))
     for paso in _bucle["pasos"]:
-        story.append(Paragraph(paso, normal_style))
-    story.append(Paragraph(_bucle["nota_torque_atmosferico"], nota_style))
+        story.append(Paragraph(T(paso), normal_style))
+    story.append(Paragraph(T(_bucle["nota_torque_atmosferico"]), nota_style))
 
     # ---- Módulo 3: Dinámica orbital y N-cuerpos ----
     story.append(PageBreak())
-    story.append(Paragraph("Módulo 3 — Dinámica orbital y N-cuerpos", modulo_style))
+    story.append(Paragraph(tm("guia.m3"), modulo_style))
     _temas_modulo3 = ["N-cuerpos", "Resonancias orbitales", "Alineaciones planetarias"]
     for tema in marco_teorico["temas_avanzados"]:
         if tema["nombre"] not in _temas_modulo3:
             continue
-        story.append(Paragraph(tema["nombre"], seccion_style))
-        story.append(Paragraph(tema["explicacion"], normal_style))
-        story.append(Paragraph(f"<i>En MHD-INT: {tema['relacion_mhd_int']}</i>", nota_style))
+        story.append(Paragraph(T(tema["nombre"]), seccion_style))
+        story.append(Paragraph(T(tema["explicacion"]), normal_style))
+        story.append(Paragraph(tm("guia.en_mhdint", x=T(tema['relacion_mhd_int'])), nota_style))
         story.append(Spacer(1, 4))
 
     # ---- Módulo 4: Habitabilidad y MHI ----
     story.append(PageBreak())
-    story.append(Paragraph("Módulo 4 — Habitabilidad y MHI", modulo_style))
-    story.append(Paragraph(marco_teorico["mhi_intro"], normal_style))
+    story.append(Paragraph(tm("guia.m4"), modulo_style))
+    story.append(Paragraph(T(marco_teorico["mhi_intro"]), normal_style))
     story.append(Spacer(1, 6))
-    story.append(Paragraph("Componentes del MHI", seccion_style))
+    story.append(Paragraph(tm("guia.comp_mhi"), seccion_style))
     for peso, nombre, desc in marco_teorico["formula_mhi"]:
-        story.append(Paragraph(f"<b>{peso} — {nombre}:</b> {desc}", normal_style))
-    story.append(Paragraph(marco_teorico["nota_penalizacion_oblicuidad"], nota_style))
+        story.append(Paragraph(f"<b>{peso} — {T(nombre)}:</b> {T(desc)}", normal_style))
+    story.append(Paragraph(T(marco_teorico["nota_penalizacion_oblicuidad"]), nota_style))
     story.append(Spacer(1, 8))
     _igm = marco_teorico["interpretacion_gravedad_magnetismo"]
-    story.append(Paragraph("Conexión gravedad-magnetismo", seccion_style))
-    story.append(Paragraph(_igm["intro"], normal_style))
-    story.append(Paragraph(f"<b>El ciclo:</b> {_igm['ciclo']}", normal_style))
+    story.append(Paragraph(tm("guia.conexion"), seccion_style))
+    story.append(Paragraph(T(_igm["intro"]), normal_style))
+    story.append(Paragraph(tm("guia.ciclo", x=T(_igm['ciclo'])), normal_style))
 
     # ---- Módulo 5: Aplicaciones prácticas y casos de estudio ----
     story.append(PageBreak())
-    story.append(Paragraph("Módulo 5 — Aplicaciones prácticas y casos de estudio", modulo_style))
+    story.append(Paragraph(tm("guia.m5"), modulo_style))
     for caso in _igm["casos"]:
-        story.append(Paragraph(caso["nombre"], seccion_style))
-        story.append(Paragraph(caso["texto"], normal_style))
+        story.append(Paragraph(T(caso["nombre"]), seccion_style))
+        story.append(Paragraph(T(caso["texto"]), normal_style))
         story.append(Spacer(1, 4))
 
     # ---- Ejercicios de autoevaluación ----
     story.append(PageBreak())
-    story.append(Paragraph("Ejercicios de autoevaluación", modulo_style))
+    story.append(Paragraph(tm("guia.ejercicios"), modulo_style))
     story.append(Paragraph(
-        "Selección curada -- la misma secuencia que usa la 🗺️ Ruta de "
-        "Aprendizaje dentro de la app, para practicar con guía paso a paso.",
+        tm("guia.ej_nota"),
         nota_style))
     for nivel, titulos in _EJERCICIOS_AUTOEVALUACION.items():
-        story.append(Paragraph(f"Nivel {nivel}", seccion_style))
+        story.append(Paragraph(tm("guia.nivel", nivel=tm(f"guia.nivel.{nivel}")), seccion_style))
         ejercicios = ejercicios_por_nivel[nivel]
         campos = _campos_ejercicio(nivel)
         for titulo in titulos:
             ej = next((e for e in ejercicios if e["titulo"] == titulo), None)
             if ej is None:
                 continue
-            story.append(Paragraph(ej["titulo"], subseccion_style))
+            story.append(Paragraph(T(ej["titulo"]), subseccion_style))
             for etiqueta, campo in campos:
                 valor = ej.get(campo)
                 if valor and valor != "—":
-                    story.append(Paragraph(f"<b>{etiqueta}:</b> {valor}", normal_style))
+                    story.append(Paragraph(f"<b>{etiqueta}:</b> {T(valor)}", normal_style))
             story.append(Spacer(1, 4))
 
     doc.build(story)

@@ -1,0 +1,21 @@
+{
+  "motor.sanity.masa": "Masa (M) ausente, negativa o cero -- dato inválido.",
+  "motor.sanity.radio": "Radio (R_p) ausente, negativo o cero -- dato inválido.",
+  "motor.sanity.semieje": "Semieje (a_inicial) negativo o cero -- dato inválido.",
+  "motor.sanity.dens_baja": "Densidad muy baja ({dens} g/cm³, mínimo esperado {minimo} g/cm³) -- revisar unidades de M/R_p. Puede ser real: Kepler-51b/c/d miden ~0.1 g/cm³.",
+  "motor.sanity.dens_alta": "Densidad muy alta ({dens} g/cm³, máximo esperado {maximo} g/cm³) -- revisar unidades de M/R_p.",
+  "motor.sanity.kepler": "Período reportado ({p_real} años) se aleja {err}% del esperado por la 3ª ley de Kepler ({p_esp} años) para a={a} UA y M_estrella={m} M☉ -- revisar semieje, período o masa estelar.",
+  "motor.cat.bueno": "Alta habitabilidad magnética",
+  "motor.cat.medio": "Habitabilidad moderada / límite",
+  "motor.cat.malo": "Estéril / atmósfera expuesta",
+  "motor.tipo.terrestre": "Terrestre",
+  "motor.tipo.supertierra": "SuperTierra",
+  "motor.tipo.gigante": "Gigante gaseoso",
+  "motor.tipo.hot_jupiter": "Hot Jupiter",
+  "motor.tipo.subneptuno": "SubNeptuno",
+  "motor.tipo.hielo": "Gigante de hielo",
+  "motor.fuente.real": "real",
+  "motor.fuente.estimado": "estimado",
+  "motor.fuente.revisar_pendiente": "pendiente de revisar",
+  "motor.mapa.progreso": "Calculando MHI del punto {i}/{total} (a={a:.3f} UA, B={B:.3f} G)..."
+}

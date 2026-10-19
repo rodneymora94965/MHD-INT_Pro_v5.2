@@ -1,0 +1,11 @@
+{
+  "sint.titulo": "🧬 Diseña tu propio planeta",
+  "sint.masa": "Masa (masas terrestres)",
+  "sint.radio": "Radio (radios terrestres)",
+  "sint.tipo_planeta": "Tipo de planeta",
+  "sint.tipo_estrella": "Tipo espectral de la estrella",
+  "sint.edad": "Edad de la estrella (Gyr)",
+  "sint.eps": "Oblicuidad inicial (grados)",
+  "sint.torques.titulo": "⚙️ Control de torques (opcional)",
+  "sint.simular": "🚀 Simular planeta sintético"
+}

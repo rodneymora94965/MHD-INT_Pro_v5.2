@@ -1,0 +1,21 @@
+{
+  "motor.sanity.masa": "Mass (M) missing, negative or zero -- invalid data.",
+  "motor.sanity.radio": "Radius (R_p) missing, negative or zero -- invalid data.",
+  "motor.sanity.semieje": "Semi-major axis (a_inicial) negative or zero -- invalid data.",
+  "motor.sanity.dens_baja": "Very low density ({dens} g/cm³, expected minimum {minimo} g/cm³) -- check the M/R_p units. It may be real: Kepler-51b/c/d measure ~0.1 g/cm³.",
+  "motor.sanity.dens_alta": "Very high density ({dens} g/cm³, expected maximum {maximo} g/cm³) -- check the M/R_p units.",
+  "motor.sanity.kepler": "Reported period ({p_real} years) deviates {err}% from the one expected by Kepler's 3rd law ({p_esp} years) for a={a} AU and M_star={m} M☉ -- check the semi-major axis, period or stellar mass.",
+  "motor.cat.bueno": "High magnetic habitability",
+  "motor.cat.medio": "Moderate habitability / borderline",
+  "motor.cat.malo": "Sterile / exposed atmosphere",
+  "motor.tipo.terrestre": "Terrestrial",
+  "motor.tipo.supertierra": "Super-Earth",
+  "motor.tipo.gigante": "Gas giant",
+  "motor.tipo.hot_jupiter": "Hot Jupiter",
+  "motor.tipo.subneptuno": "Sub-Neptune",
+  "motor.tipo.hielo": "Ice giant",
+  "motor.fuente.real": "real",
+  "motor.fuente.estimado": "estimated",
+  "motor.fuente.revisar_pendiente": "pending review",
+  "motor.mapa.progreso": "Computing MHI for point {i}/{total} (a={a:.3f} AU, B={B:.3f} G)..."
+}

@@ -1,0 +1,12 @@
+{
+  "sim.planeta": "Planeta",
+  "sim.t_max": "Tiempo máximo (Gyr)",
+  "sim.dt": "Paso (años)",
+  "sim.torques": "⚙️ Control de torques (experimentos)",
+  "sim.torque_mag": "Torque magnético",
+  "sim.torque_estelar": "Marea estelar",
+  "sim.torque_lunar": "Marea lunar",
+  "sim.dinamo": "🧠 Modelo de dínamo y atmósfera",
+  "sim.atmosfera": "Activar pérdida atmosférica (escape XUV)",
+  "sim.boton": "Simular"
+}
