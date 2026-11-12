@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "Si usas este software, por favor cítalo así. / If you use this software, please cite it as below."
+title: "MHD-INT: simulador educativo de la interacción planeta–estrella"
+type: software
+version: "5.2.3"
+# fecha de la release v5.2.3 (AAAA-MM-DD)
+date-released: "2026-11-12"
+license: AGPL-3.0-only
+repository-code: "https://github.com/rodneymora94965/MHD-INT_Pro_v5.2"
+url: "https://solariscore.com.co"
+abstract: >-
+  Simulador educativo de la interacción planeta–estrella: órbita, rotación,
+  campo magnético, mareas, escape atmosférico e inclinación del eje.
+  Interfaz bilingüe (español / inglés). El Índice de Habitabilidad Magnética
+  (MHI) es un índice exploratorio propio, no una métrica establecida.
+  Educational simulator of planet–star interaction (orbit, rotation, magnetic
+  field, tides, atmospheric escape, axial tilt). Bilingual UI (ES/EN).
+keywords:
+  - astrophysics
+  - exoplanets
+  - magnetohydrodynamics
+  - education
+  - streamlit
+authors:
+  - family-names: "Rigg Mora"
+    given-names: "Roney"
+    alias: "Solaris Core"

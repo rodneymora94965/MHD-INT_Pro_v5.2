@@ -23,7 +23,7 @@ from eventos_ui import render_eventos
 from i18n import t, selector_idioma
 from contenido_i18n import nombre_cuerpo, tipo_visible, categoria_visible
 
-VERSION_PUBLICA = "5.2.2"  # (definida arriba: la usa el título de la pestaña)
+VERSION_PUBLICA = "5.2.3"  # (definida arriba: la usa el título de la pestaña)
 
 st.set_page_config(page_title=t("libre.pagina"), layout="wide", page_icon="assets/logo_mhd_int.png")
 

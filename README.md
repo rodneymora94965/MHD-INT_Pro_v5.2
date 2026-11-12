@@ -5,8 +5,14 @@ rotación, campo magnético, mareas, escape atmosférico y oblicuidad, con el
 Índice de Habitabilidad Magnética (MHI).
 
 **Autor:** Roney Rigg Mora · Solaris Core
-**Versión:** 5.2.2 (octubre 2026)
+**Versión:** 5.2.3 (noviembre 2026)
 **Licencia:** AGPL-3.0 — ver [`LICENSE`](./LICENSE) y [`TERMINOS_DE_LICENCIAMIENTO.md`](./TERMINOS_DE_LICENCIAMIENTO.md)
+
+## Qué es y qué no es
+
+MHD-INT es una herramienta para explorar y enseñar cómo se relacionan la órbita, la rotación y el campo magnético de un planeta. Sirve para comparar planetas y ver cómo cambia el resultado al variar un parámetro. La interfaz está en español y en inglés.
+
+No es una herramienta de predicción. El Índice de Habitabilidad Magnética (MHI) es un índice exploratorio propio de este proyecto, no una métrica establecida en la literatura, y no sustituye un estudio de habitabilidad.
 
 ## Qué incluye esta versión
 
@@ -43,11 +49,13 @@ la base completa; es lo esperado.
 `validacion.py` compara 6 cuerpos del Sistema Solar partiendo de sus valores
 actuales: es una **prueba de consistencia**, no una predicción independiente.
 Ningún exoplaneta tiene validación cuantitativa contra observaciones. El modelo
-térmico del núcleo está marcado como **EXPERIMENTAL**. Los detalles y las
+térmico del núcleo está marcado como **EXPERIMENTAL**. El escape atmosférico
+no está acoplado a la intensidad del campo magnético: el MHI no debe leerse
+como «el campo protege la atmósfera». Los detalles y las
 limitaciones conocidas están en [`docs/MARCO_TEORICO.md`](./docs/MARCO_TEORICO.md)
 y el historial en [`docs/CAMBIOS.md`](./docs/CAMBIOS.md).
 
 ## Cómo citar
 
 Mora, R. R. (2026). *MHD-INT: simulador de interacción planeta–estrella*,
-versión 5.2.2. Solaris Core.
+versión 5.2.3. Solaris Core.

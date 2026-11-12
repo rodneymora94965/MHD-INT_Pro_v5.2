@@ -6,6 +6,11 @@ del proyecto de no presentar precisión sin sustento verificable.
 
 ---
 
+## v5.2.3 — Interfaz bilingüe (nov-2026)
+
+- Interfaz en español e inglés; el idioma elegido se conserva al recargar la página.
+- README actualizado (qué es y qué no es, límites conocidos), `CITATION.cff` y pruebas automáticas en GitHub Actions.
+
 ## v5.2.2 — Auditoría del motor (oct-2026)
 
 Revisión completa del motor (`engine.py`, módulos opcionales, base de
